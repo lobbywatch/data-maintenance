@@ -1,0 +1,32 @@
+* {
+  font-family: sans;
+  box-sizing: border-box;
+}
+/* https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Tables */
+table {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.main-head {
+  grid-area: header;
+}
+.content {
+  grid-area: content;
+}
+.main-nav {
+  grid-area: nav;
+}
+.main-footer {
+  grid-area: footer;
+}
+.wrapper {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 5fr;
+  grid-template-areas:
+    "header header"
+    "nav content"
+    "nav content"
+    "footer footer";
+}

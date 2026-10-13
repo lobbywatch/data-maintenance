@@ -1,0 +1,37 @@
+{
+  "name": "@lobbywatch/data-management",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "fmt": "prettier -w .",
+    "dev": "node --env-file .env --watch-path src src/main.ts",
+    "check": "tsc",
+    "check:watch": "tsc --watch"
+  },
+  "dependencies": {
+    "cookie-parser": "1.4.7",
+    "effect": "4.0.4",
+    "express": "5.2.1",
+    "helmet": "8.3.0",
+    "i18n": "0.15.4",
+    "i18next": "26.4.4",
+    "i18next-http-middleware": "3.9.9",
+    "liquidjs": "10.30.0",
+    "mariadb": "3.5.4",
+    "openid-client": "6.8.8",
+    "winston": "3.19.0"
+  },
+  "devDependencies": {
+    "@shopify/prettier-plugin-liquid": "1.11.2",
+    "@types/cookie-parser": "1.4.10",
+    "@types/express": "5.0.6",
+    "@types/node": "26.6.5",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3"
+  }
+}
