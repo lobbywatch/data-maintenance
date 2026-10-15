@@ -22,7 +22,7 @@ table {
   grid-template-columns: 1fr 5fr;
   grid-template-areas:
     "nav content"
-    "nav content"
+    "nav content";
 }
 
 nav ul {

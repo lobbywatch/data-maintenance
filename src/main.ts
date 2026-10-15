@@ -50,7 +50,7 @@ app.set("views", "src/templates"); // specify the views directory
 app.set("view engine", "liquid");
 
 app.use(helmet());
-app.use("/static", express.static("src/static"));
+app.use("/", express.static("static"));
 app.use(
   auth({
     issuerBaseURL: get("oidc_server"),
