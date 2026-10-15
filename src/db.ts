@@ -13,7 +13,7 @@ const pool = mariadb.createPool({
 
 export async function getMps(): Promise<Array<MP>> {
   const connection = await pool.getConnection();
-  const rows = await connection.query<{ vorname: string; nachname: string }>(
+  const rows = await connection.query<{ vorname: string; nachname: string }[]>(
     "select nachname, vorname from parlamentarier where im_rat_bis is null",
   );
   connection.end();
