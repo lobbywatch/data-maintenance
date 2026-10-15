@@ -60,10 +60,11 @@ app.use(
     idpLogout: false,
   }),
 );
+
 app.use(
   i18nextmiddleware.handle(i18next, {
-    ignoreRoutes: ["/auth"], // or function(req, res, options, i18next) { /* return true to ignore */ }
-    removeLngFromUrl: false, // removes the language from the url when language detected in path
+    ignoreRoutes: ["/.well-known"],
+    removeLngFromUrl: false,
   }),
 );
 
