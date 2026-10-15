@@ -4,7 +4,7 @@ import { type MP, MpSchema } from "./model.ts";
 import { Schema } from "effect";
 
 const pool = mariadb.createPool({
-  host: "127.0.0.1",
+  host: config.get("db_host"),
   user: config.get("db_user"),
   password: config.get("db_password"),
   database: "lobbywat_lobbywatch",

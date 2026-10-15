@@ -1,6 +1,11 @@
 export function get(
   key:
-    "db_user" | "db_password" | "oidc_server" | "oidc_client_id" | "base_url",
+    | "db_user"
+    | "db_password"
+    | "db_host"
+    | "oidc_server"
+    | "oidc_client_id"
+    | "base_url",
 ): string {
   const fullKey = `LW_${key.toUpperCase()}`;
   if (process.env[fullKey]) {
