@@ -1,0 +1,18 @@
+{% layout 'layout.liquid' %}
+{% block content %}
+  <div class="wrapper">
+    <nav class="main-nav">
+      <ul>
+        <li>
+          <a href="/{{ language }}/feedback">{{ 'navTitle_feedback' | t }}</a>
+        </li>
+        <li>
+          <a href="/logout">{{ 'navTitle_logout' | t }}</a>
+        </li>
+      </ul>
+    </nav>
+    <main class="content">
+      {% block view %}{% endblock %}
+    </main>
+  </div>
+{% endblock %}

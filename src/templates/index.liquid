@@ -1,34 +1,5 @@
-{% layout 'layout.liquid' %}
-{% block content %}
-  <div class="wrapper">
-    <header class="main-head">The header</header>
-    <nav class="main-nav">
-      <ul>
-        <li><a href="">Nav 1</a></li>
-        <li><a href="">Nav 2</a></li>
-        <li><a href="/auth/logout">logout</a></li>
-      </ul>
-      {{ 'test' | t }}
-      {{ user.email }}
-    </nav>
-    <article class="content">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ 'tableHeader_firstName' | t }}</th>
-            <th>{{ 'tableHeader_lastName' | t }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for mp in mps %}
-            <tr>
-              <td>{{ mp.firstName }}</td>
-              <td>{{ mp.lastName }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </article>
-    <footer class="main-footer">The footer</footer>
-  </div>
+{% layout 'logged-in-layout.liquid' %}
+{% block view %}
+  {{ 'test' | t }}
+  {{ user.email }}
 {% endblock %}

@@ -1,0 +1,21 @@
+{% layout 'logged-in-layout.liquid' %}
+{% block view %}
+  <table>
+    <thead>
+      <tr>
+        <th>{{ 'tableHeader_firstName' | t }}</th>
+        <th>{{ 'tableHeader_lastName' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for mp in mps %}
+        <tr>
+          <td>{{ mp.firstName }}</td>
+          <td>{{ mp.lastName }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </article>
+
+{% endblock %}

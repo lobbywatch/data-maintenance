@@ -5,12 +5,10 @@ import * as i18nextmiddleware from "i18next-http-middleware";
 import { Liquid } from "liquidjs";
 
 import { getMps } from "./db.ts";
-import { createLogger } from "./log.ts";
 import { auth } from "express-openid-connect";
 import { get } from "./config.ts";
 import { randomBytes } from "node:crypto";
 
-const logger = createLogger("main");
 const app: Express = express();
 
 const port = 3000;
@@ -31,6 +29,8 @@ await i18next.use(i18nextmiddleware.LanguageDetector).init({
         test: "hallo",
         tableHeader_lastName: "Nachname",
         tableHeader_firstName: "Vorname",
+        navTitle_feedback: "Rückmeldungen",
+        navTitle_logout: "Ausloggen",
       },
     },
     fr: {
@@ -67,15 +67,21 @@ app.use(
   }),
 );
 
-app.get("/:lng/start", async function (req, res) {
-  const mps = await getMps();
+app.get("/:lng", async function (req, res) {
   res.render("index", {
-    mps,
     user: req.oidc.user,
     lang: req.language,
   });
 });
 
+app.get("/:lng/feedback", async function (req, res) {
+  const mps = await getMps();
+  res.render("feedback", {
+    mps,
+    lang: req.language,
+  });
+});
+
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`app listening on port ${port}`);
 });
