@@ -14,16 +14,14 @@
     "check:watch": "tsc --watch"
   },
   "dependencies": {
-    "cookie-parser": "1.4.7",
     "effect": "4.0.4",
     "express": "5.2.1",
+    "express-openid-connect": "3.4.0",
     "helmet": "8.3.0",
-    "i18n": "0.15.4",
     "i18next": "26.4.4",
     "i18next-http-middleware": "3.9.9",
     "liquidjs": "10.30.0",
     "mariadb": "3.5.4",
-    "openid-client": "6.8.8",
     "winston": "3.19.0"
   },
   "devDependencies": {
