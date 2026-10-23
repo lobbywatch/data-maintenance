@@ -4,7 +4,7 @@ import i18next from "i18next";
 import * as i18nextmiddleware from "i18next-http-middleware";
 import { Liquid } from "liquidjs";
 
-import { getMps } from "./db.ts";
+import { getMps } from "./data.ts";
 import { auth } from "express-openid-connect";
 import { get } from "./config.ts";
 import { randomBytes } from "node:crypto";
