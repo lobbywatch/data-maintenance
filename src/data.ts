@@ -2,10 +2,25 @@ import mariadb from "mariadb";
 import * as config from "./config.ts";
 import { Schema } from "effect";
 
-const InterestSchema = Schema.Struct({ kind: Schema.Literals([]), function: Schema.Literals([]), organisation: Schema.Struct({ name: Schema.String }), lobbyGroup: Schema.Struct({ name: Schema.String }) })
-type Interest = Schema.Schema.Type<typeof InterestSchema>
- export const MpSchema = Schema.Struct({
+const InterestSchema = Schema.Struct({
+  id: Schema.Number,
+  kind: Schema.Literals([
+    "mitglied",
+    "vorstand",
+    "beirat",
+    "geschaeftsfuehrend",
+    "taetig",
+    "gesellschafter",
+    "finanziell",
+  ]),
+  function: Schema.NullOr(
+    Schema.Literals(["praesident", "vizepraesident", "mitglied"]),
+  ),
+  organisationName: Schema.String,
+});
 
+type Interest = Schema.Schema.Type<typeof InterestSchema>;
+export const MpSchema = Schema.Struct({
   id: Schema.Number,
   firstName: Schema.String,
   lastName: Schema.String,
@@ -38,18 +53,25 @@ export async function getMps(): Promise<Array<MP>> {
   );
 }
 
-export async function getInterests(mpId: string): Promise<Interest[]> {
-
+export async function getInterests(mpId: number): Promise<Interest[]> {
   const connection = await pool.getConnection();
   const rows = await connection.query<
     { id: number; vorname: string; nachname: string }[]
   >(
-    "SELECT ib.id  FROM interessenbindung ib WHERE parlamentarier_id = :id",
+    "SELECT ib.id as id, ib.art, ib.funktion_im_gremium, o.name_de AS org_name_de \
+    FROM interessenbindung ib \
+    JOIN organisation o ON ib.organisation_id = o.id \
+     WHERE parlamentarier_id = ?",
+    [mpId],
   );
   connection.end();
   return Schema.decodeUnknownSync(Schema.Array(InterestSchema))(
     rows.map((row) => ({
       id: row.id,
+      kind: row.art,
+      function: row.funktion_im_gremium,
+      organisationName: row.org_name_de,
     })),
+    { errors: "all", reportInput: true },
   );
 }

@@ -14,6 +14,7 @@
     "check:watch": "tsc --watch"
   },
   "dependencies": {
+    "body-parser": "2.4.0",
     "effect": "4.0.4",
     "express": "5.2.1",
     "express-openid-connect": "3.4.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@shopify/prettier-plugin-liquid": "1.11.2",
+    "@types/body-parser": "1.19.6",
     "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.6",
     "@types/node": "26.6.5",

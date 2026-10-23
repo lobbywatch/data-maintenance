@@ -1,0 +1,56 @@
+{% layout 'layout.liquid' %}
+{% block content %}
+  <style>
+    fieldset {
+      display: flex;
+    }
+
+    tbody tr:nth-of-type(odd) {
+      background: #e0e0e0;
+    }
+  </style>
+  <h1>{{ 'feedbackForm_header_text' | t }}</h1>
+  <form action="../submitFeedback" method="post">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ 'feedbackForm_tableHeader_kind' | t }}</th>
+          <th>{{ 'feedbackForm_tableHeader_function' | t }}</th>
+          <th>{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ib in interessenBindungen %}
+          <tr>
+            <td>{{ ib.kind }}</td>
+            <td>{{ ib.function }}</td>
+            <td>{{ ib.organisationName }}</td>
+            <td>
+              <fieldset>
+                <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
+                <div>
+                  <label for="response_ok_{{ ib.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
+                  <input type="radio" value="ok" name="response_{{ ib.id }}" id="response_ok_{{ ib.id }}">
+                </div>
+                <div>
+                  <label for="response_wrong_{{ ib.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
+                  <input type="radio" value="wrong" name="response_{{ ib.id }}" id="response_wrong_{{ ib.id }}">
+                </div>
+                <div>
+                  <label for="response_comment_{{ ib.id }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
+                  <textarea
+                    cols="40"
+                    rows="3"
+                    name="response_comment_{{ ib.id }}"
+                    id="response_comment_{{ ib.id }}"
+                  ></textarea>
+                </div>
+              </fieldset>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+{% endblock %}
