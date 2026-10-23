@@ -68,6 +68,10 @@ app.use(
   }),
 );
 
+app.get("/", function (req, res) {
+  res.redirect("/de");
+});
+
 app.get("/:lng", async function (req, res) {
   res.render("index", {
     user: req.oidc.user,
