@@ -46,7 +46,7 @@ await i18next.use(i18nextmiddleware.LanguageDetector).init({
 app.set("trust proxy", 1);
 
 app.engine("liquid", engine.express());
-app.set("views", "src/templates"); // specify the views directory
+app.set("views", "src/templates");
 app.set("view engine", "liquid");
 
 app.use(helmet());
