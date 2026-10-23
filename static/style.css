@@ -1,7 +1,17 @@
+:root {
+  --bg-color: #fff;
+  --zebra-color: #e0e0e0;
+}
+
 * {
   font-family: sans;
   box-sizing: border-box;
 }
+
+body {
+  background-color: var(--bg-color);
+}
+
 /* https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Tables */
 table {
   table-layout: fixed;

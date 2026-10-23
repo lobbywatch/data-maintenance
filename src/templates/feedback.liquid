@@ -5,6 +5,7 @@
       <tr>
         <th>{{ 'tableHeader_firstName' | t }}</th>
         <th>{{ 'tableHeader_lastName' | t }}</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -12,10 +13,14 @@
         <tr>
           <td>{{ mp.firstName }}</td>
           <td>{{ mp.lastName }}</td>
+          <td>
+            <form action="{{ action }}" method="post">
+              <input type="hidden" name="mpId" value="{{ mp.id }}"
+              /><button>{{ 'table_newFeedbackButton' | t }}</button>
+            </form>
+          </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
-  </article>
-
 {% endblock %}

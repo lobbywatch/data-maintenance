@@ -1,0 +1,95 @@
+{% layout 'layout.liquid' %}
+{% block head %}
+  <style>
+    fieldset {
+      display: flex;
+    }
+
+    tbody tr:nth-of-type(odd) {
+      background: var(--zebra-color);
+    }
+
+    form {
+      height: 90dvh;
+      overflow: auto;
+
+      thead tr {
+        position: sticky;
+        top: 0;
+        background: var(--bg-color);
+      }
+
+      div.formbuttons {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg-color);
+      }
+    }
+  </style>
+{% endblock %}
+{% block content %}
+  <h1>{{ 'feedbackForm_header_text' | t }}</h1>
+  <form method="post">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ 'feedbackForm_tableHeader_kind' | t }}</th>
+          <th>{{ 'feedbackForm_tableHeader_function' | t }}</th>
+          <th>{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ib in interessenBindungen %}
+          <tr>
+            <td>{{ ib.kind }}</td>
+            <td>{{ ib.function }}</td>
+            <td>{{ ib.organisationName }}</td>
+            <td>
+              <fieldset>
+                <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
+                {% capture rid %}response_{{ ib.id }}{% endcapture %}
+                <div>
+                  <label for="response_ok_{{ ib.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
+                  <input
+                    required
+                    type="radio"
+                    value="ok"
+                    name="{{ rid }}"
+                    {{ feedback[ib.id].response == 'ok' | if_true: 'checked' }}
+                    id="response_ok_{{ ib.id }}"
+                  >
+                </div>
+                <div>
+                  <label for="response_wrong_{{ ib.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
+                  <input
+                    required
+                    type="radio"
+                    value="wrong"
+                    name="{{ rid }}"
+                    {{ feedback[ib.id].response == 'wrong' | if_true: 'checked' }}
+                    id="response_wrong_{{ ib.id }}"
+                  >
+                </div>
+                <div>
+                  {% capture cid %}comment_{{ ib.id }}{% endcapture %}
+                  <label for="{{ cid }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
+                  <textarea
+                    cols="40"
+                    rows="3"
+                    name="{{ cid }}"
+                    id="{{ cid }}"
+                  >{{feedback[ib.id].comment}}</textarea>
+                </div>
+              </fieldset>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="formbuttons">
+      <button formaction="{{ submitAction }}">{{ 'feedbackForm_submitButton_label' | t }}</button>
+      <button formnovalidate formaction="{{ saveAction }}">{{ 'feedbackForm_saveButton_label' | t }}</button>
+    </div>
+  </form>
+{% endblock %}
