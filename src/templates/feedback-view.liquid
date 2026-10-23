@@ -1,0 +1,42 @@
+{% layout 'logged-in-layout.liquid' %}
+{% block head %}
+  <style>
+    tr:has(td.ok) {
+      background-color: #93ce7c;
+    }
+    tr:has(td.wrong) {
+      background-color: #ff8989;
+    }
+  </style>
+{% endblock %}
+{% block view %}
+  <h1>{{ 'feedbackView_header_text' | t: person }}</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>{{ 'feedbackView_tableHeader_kind' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_function' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_organisationName' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_response' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_comment' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for interest in interests %}
+        <tr>
+          <td>{{ interest.kind }}</td>
+          <td>{{ interest.function }}</td>
+          <td>{{ interest.organisationName }}</td>
+          <td>{{ interest.organisationLegalForm }}</td>
+          <td class="{{ request.feedback[interest.id].response }}">
+            {{ request.feedback[interest.id].response }}
+          </td>
+          <td>
+            {{ request.feedback[interest.id].comment }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
