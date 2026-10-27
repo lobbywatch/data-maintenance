@@ -12,17 +12,15 @@ const feedbackFormFieldNameSchema = Schema.TemplateLiteralParser([
   Schema.NumberFromString,
 ]);
 
-const partialFeedbackResponseSchema = Schema.Record(
+const partialFeedbackSchema = Schema.Record(
   Schema.String,
   Schema.Struct({
     response: Schema.optional(Schema.Literals(["ok", "wrong"])),
     comment: Schema.optional(Schema.String),
   }),
 );
-type PartialFeedbackResponse = Schema.Schema.Type<
-  typeof partialFeedbackResponseSchema
->;
-const completeFeedbackResponseSchema = Schema.Record(
+type PartialFeedback = Schema.Schema.Type<typeof partialFeedbackSchema>;
+const completeFeedbackSchema = Schema.Record(
   Schema.String,
   Schema.Struct({
     response: Schema.Literals(["ok", "wrong"]),
@@ -30,10 +28,8 @@ const completeFeedbackResponseSchema = Schema.Record(
   }),
 );
 
-type CompleteFeedbackResponse = Schema.Schema.Type<
-  typeof completeFeedbackResponseSchema
->;
-const createFeedbackRequestRequestSchema = Schema.Struct({
+type CompleteFeedback = Schema.Schema.Type<typeof completeFeedbackSchema>;
+const createFeedbackRequestSchema = Schema.Struct({
   personId: Schema.NumberFromString,
 });
 
@@ -43,7 +39,7 @@ export const feedbackRequestSchema = Schema.Union([
     personId: Schema.Finite,
     personType: PersonSchema.fields.type,
     requestId: Schema.String,
-    createdAt: Schema.Date,
+    createdAt: Schema.DateFromString,
   }),
   Schema.Struct({
     state: Schema.Literal("partial"),
@@ -52,7 +48,7 @@ export const feedbackRequestSchema = Schema.Union([
     requestId: Schema.String,
     createdAt: Schema.DateFromString,
     updatedAt: Schema.DateFromString,
-    feedback: partialFeedbackResponseSchema,
+    feedback: partialFeedbackSchema,
   }),
   Schema.Struct({
     state: Schema.Literal("complete"),
@@ -61,7 +57,7 @@ export const feedbackRequestSchema = Schema.Union([
     requestId: Schema.String,
     createdAt: Schema.DateFromString,
     updatedAt: Schema.DateFromString,
-    feedback: completeFeedbackResponseSchema,
+    feedback: completeFeedbackSchema,
   }),
 ]);
 type FeedbackRequest = Schema.Schema.Type<typeof feedbackRequestSchema>;
@@ -82,18 +78,15 @@ export function createViewLink(request: FeedbackRequest): URL {
 export async function createFeedbackRequest(
   body: unknown,
 ): Promise<FeedbackRequest> {
-  const req = Schema.decodeUnknownSync(createFeedbackRequestRequestSchema)(
-    body,
-  );
+  const req = Schema.decodeUnknownSync(createFeedbackRequestSchema)(body);
   const randomString = randomBytes(32).toString("hex");
-  const feedbackRequest = feedbackRequestSchema.make({
+  const feedbackRequest = {
     state: "new",
     requestId: randomString,
     personId: req.personId,
-
     personType: "mp", // TODO
-    createdAt: new Date(),
-  });
+    createdAt: new Date().toISOString(),
+  };
   await saveFeedbackRequest(feedbackRequest);
   return feedbackRequest;
 }
@@ -115,10 +108,10 @@ export async function getFeedbackRequests(): Promise<Array<FeedbackRequest>> {
   return FEEDBACK_REQUESTS.values().toArray();
 }
 
-export function parseResponse(
+export function parsePartialFeedback(
   body: Record<string, string>,
-): PartialFeedbackResponse {
-  const responses: DeepMutable<PartialFeedbackResponse> = {};
+): PartialFeedback {
+  const responses: DeepMutable<PartialFeedback> = {};
   for (const key in body) {
     const [field, _, interestId] = Schema.decodeUnknownSync(
       feedbackFormFieldNameSchema,
@@ -130,15 +123,20 @@ export function parseResponse(
       responses[interestId][field] = body[key];
     }
   }
-  return Schema.decodeSync(partialFeedbackResponseSchema)(responses);
+  return Schema.decodeSync(partialFeedbackSchema)(responses);
 }
 
-export async function saveFeedback(
-  request: FeedbackRequest,
-  feedback: PartialFeedbackResponse,
-): Promise<void> {
-  request.state = "partial";
-  request.feedback = feedback;
+export function parseCompleteFeedback(
+  body: Record<string, string>,
+): CompleteFeedback {
+  const feedback = parsePartialFeedback(body);
+  return Schema.decodeUnknownSync(completeFeedbackSchema)(feedback);
+}
+
+export async function saveFeedback(request: FeedbackRequest): Promise<void> {
   request.updatedAt = new Date().toISOString();
-  FEEDBACK_REQUESTS.set(request.requestId, request);
+  FEEDBACK_REQUESTS.set(
+    request.requestId,
+    Schema.decodeUnknownSync(feedbackRequestSchema)(request),
+  );
 }

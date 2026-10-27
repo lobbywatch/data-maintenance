@@ -16,7 +16,8 @@ import {
   getFeedbackRequest,
   getFeedbackRequests,
   getFeedbackRequestText,
-  parseResponse,
+  parseCompleteFeedback,
+  parsePartialFeedback,
   saveFeedback,
 } from "./feedback.ts";
 
@@ -76,6 +77,10 @@ i18next
           feedbackRequests_viewLink_text: "Anschauen",
           feedbackRequests_createRequestLink_text: "Rückmeldung anfragen",
           feedbackRequests_noRequests_text: "Keine Anfragen vorhanden",
+          feedback_already_complete:
+            "Diese Rückmeldungen können nicht mehr bearbeitet werden.",
+          feedback_complete_header: "Danke!",
+          feedback_complete_text: "Wir haben Ihre Rückmeldungen erhalten.",
         },
       },
       fr: {
@@ -92,7 +97,7 @@ i18next
 
 app.use(
   i18nextmiddleware.handle(i18next, {
-    ignoreRoutes: ["/.well-known", "/favicon.ico"],
+    ignoreRoutes: ["/.well-known", "/favicon.ico", "/style.css", "/callback"],
     removeLngFromUrl: false,
   }),
 );
@@ -155,7 +160,14 @@ app.get("/:lng/feedback/:requestId/form", async function (req, res) {
     return;
   }
 
+  console.log(feedbackRequest);
+  if (feedbackRequest.state === "complete") {
+    res.render("feedback-already-complete");
+    return;
+  }
+
   const interests = await getInterests(feedbackRequest.personId);
+
   res.render("feedback-form", {
     request: feedbackRequest,
     interests,
@@ -190,9 +202,29 @@ app.post("/:lng/feedback/:requestId/save", async function (req, res) {
       res.sendStatus(404);
       return;
     }
-    const savedFeedback = parseResponse(req.body);
-    await saveFeedback(feedbackRequest, savedFeedback);
+    const feedback = parsePartialFeedback(req.body);
+    feedbackRequest.state = "partial";
+    feedbackRequest.feedback = feedback;
+    await saveFeedback(feedbackRequest);
     res.redirect(`/${req.language}/feedback/${req.params.requestId}/form`);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
+app.post("/:lng/feedback/:requestId/submit", async function (req, res) {
+  try {
+    const feedbackRequest = await getFeedbackRequest(req.params.requestId);
+    if (!feedbackRequest) {
+      res.sendStatus(404);
+      return;
+    }
+    const feedback = parseCompleteFeedback(req.body);
+    feedbackRequest.state = "complete";
+    feedbackRequest.feedback = feedback;
+    await saveFeedback(feedbackRequest);
+    res.render("");
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
@@ -204,11 +236,11 @@ app.get("/:lng/feedback", async function (req, res) {
 
   res.render("feedback-requests", {
     createRequestLink: `/${req.language}/feedback/request`,
-    feedbackRequests: feedbackRequests.map((r) => {
-      const person = getPerson(r.personId, r.personType);
-      r.person = person;
-      r.viewLink = createViewLink(r);
-      return r;
+    feedbackRequests: feedbackRequests.map((request) => {
+      const person = getPerson(request.personId, request.personType);
+      request.person = person;
+      request.viewLink = createViewLink(request);
+      return request;
     }),
   });
 });
