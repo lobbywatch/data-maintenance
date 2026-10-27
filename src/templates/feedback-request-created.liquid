@@ -1,5 +1,7 @@
 {% layout 'logged-in-layout.liquid' %}
 {% block view %}
   <textarea cols="100" rows="10" disabled>{{ text }}</textarea>
-  <a href="{{ secretLink }}" target="_blank">{{ secretLink }}</a>
+  <p>
+    <a href="{{ secretLink }}" target="_blank">{{ secretLink }}</a>
+  </p>
 {% endblock %}

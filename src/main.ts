@@ -1,21 +1,24 @@
 import express, { type Express } from "express";
 import helmet from "helmet";
 import i18next from "i18next";
+import MF2 from "i18next-mf2";
 import * as i18nextmiddleware from "i18next-http-middleware";
 import { Liquid } from "liquidjs";
 import bodyParser from "body-parser";
-import { getMps, getInterests } from "./data.ts";
+import { getPersons, getInterests, getPerson } from "./data.ts";
 import { auth } from "express-openid-connect";
 import { get } from "./config.ts";
 import { randomBytes } from "node:crypto";
 import {
   createFeedbackRequest,
   createSecretLink,
+  createViewLink,
   getFeedbackRequest,
+  getFeedbackRequests,
   getFeedbackRequestText,
   parseResponse,
   saveFeedback,
-} from "./feedbackRequest.ts";
+} from "./feedback.ts";
 
 const app: Express = express();
 
@@ -24,51 +27,68 @@ const port = 3000;
 app.use(bodyParser.urlencoded());
 
 const engine = new Liquid();
-engine.registerFilter("t", function (key: string) {
-  return i18next.t(key);
+engine.registerFilter("t", function (key: string, options) {
+  return i18next.t(key, options);
 });
 
 engine.registerFilter("if_true", (condition, truthyValue) => {
-  console.log(condition);
   return condition ? truthyValue : "";
 });
 
-i18next.use(i18nextmiddleware.LanguageDetector).init({
-  fallbackLng: "de", // TODO
-  preload: ["de", "fr"],
-  debug: true,
-  detection: { order: ["path"] },
-  resources: {
-    de: {
-      translation: {
-        table_newFeedbackButton: "Rückmeldung einholen",
-        tableHeader_lastName: "Nachname",
-        tableHeader_firstName: "Vorname",
-        navTitle_feedback: "Rückmeldungen",
-        navTitle_logout: "Ausloggen",
-        feedbackForm_header_text: "Ihre Interessenbindungen",
-        feedbackForm_tableHeader_kind: "Art",
-        feedbackForm_tableHeader_function: "Funktion",
-        feedbackForm_tableHeader_organisationName: "Organisation",
-        feedbackForm_response_legend: "Ihre Rückmeldung",
-        feedbackForm_responseLabel_ok: "Stimmt",
-        feedbackForm_responseLabel_wrong: "Falsch",
-        feedbackForm_responseLabel_comment: "Kommentar",
-        feedbackForm_submitButton_label: "Abschliessen",
-        feedbackForm_saveButton_label: "Speichern",
+// TODO make it work and put it into separate module
+i18next
+  .use(MF2)
+  .use(i18nextmiddleware.LanguageDetector)
+  .init({
+    fallbackLng: "de",
+    preload: ["de", "fr"],
+    debug: true,
+    detection: { order: ["path"] },
+    resources: {
+      de: {
+        translation: {
+          table_newFeedbackButton: "Rückmeldung anfragen",
+          tableHeader_lastName: "Nachname",
+          tableHeader_firstName: "Vorname",
+          navTitle_feedback: "Rückmeldungen",
+          navTitle_logout: "Ausloggen",
+          feedbackForm_header_text: "Ihre Interessenbindungen",
+          feedbackForm_tableHeader_kind: "Art",
+          feedbackForm_tableHeader_function: "Funktion",
+          feedbackForm_tableHeader_organisationName: "Organisation",
+          feedbackForm_tableHeader_organisationLegalForm: "Rechtsform",
+          feedbackForm_response_legend: "Ihre Rückmeldung",
+          feedbackForm_responseLabel_ok: "Stimmt",
+          feedbackForm_responseLabel_wrong: "Falsch",
+          feedbackForm_responseLabel_comment: "Kommentar",
+          feedbackForm_submitButton_label: "Abschliessen",
+          feedbackForm_saveButton_label: "Speichern",
+          feedbackRequests_headline: "Offene Rückmeldungsanfragen",
+          requests_tableHeader_state: "Status",
+          feedbackView_header_text:
+            "Rückmeldungen von {$firstName} {$lastName}",
+          feedbackView_tableHeader_kind: "Art",
+          feedbackView_tableHeader_function: "Funktion",
+          feedbackView_tableHeader_organisationName: "Organisation",
+          feedbackView_tableHeader_organisationLegalForm: "Rechtsform",
+          feedbackView_tableHeader_response: "Antwort",
+          feedbackView_tableHeader_comment: "Kommentar",
+          feedbackRequests_viewLink_text: "Anschauen",
+          feedbackRequests_createRequestLink_text: "Rückmeldung anfragen",
+          feedbackRequests_noRequests_text: "Keine Anfragen vorhanden",
+        },
+      },
+      fr: {
+        translation: {
+          table_newFeedbackButton: "demander commentaires",
+          tableHeader_lastName: "nom",
+          tableHeader_firstName: "prènom",
+          navTitle_feedback: "commentaires",
+          navTitle_logout: "se déconnecter",
+        },
       },
     },
-    fr: {
-      translation: {
-        table_newFeedbackButton: "demander commentaires",
-        tableHeader_lastName: "nom",
-        tableHeader_firstName: "prènom",
-        navTitle_feedback: "commentaires",
-        navTitle_logout: "se déconnecter",
-      },
-    },
-  },
-});
+  });
 
 app.use(
   i18nextmiddleware.handle(i18next, {
@@ -106,8 +126,8 @@ app.get("/:lng", async function (req, res) {
   });
 });
 
-app.get("/:lng/feedback", async function (req, res) {
-  const mps = await getMps();
+app.get("/:lng/feedback/request", async function (req, res) {
+  const mps = await getPersons();
   res.render("feedback", {
     mps,
     lang: req.language,
@@ -120,7 +140,7 @@ app.post("/:lng/feedback/createRequest", async function (req, res) {
     const feedbackRequest = await createFeedbackRequest(req.body);
     const secretLink = createSecretLink(feedbackRequest);
     const text = await getFeedbackRequestText(secretLink);
-    res.render("feedback-request-template", { text, secretLink });
+    res.render("feedback-request-created", { text, secretLink });
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
@@ -135,12 +155,31 @@ app.get("/:lng/feedback/:requestId/form", async function (req, res) {
     return;
   }
 
-  const interessenBindungen = await getInterests(feedbackRequest.mpId);
+  const interests = await getInterests(feedbackRequest.personId);
   res.render("feedback-form", {
-    feedback: feedbackRequest.feedback,
-    interessenBindungen,
+    request: feedbackRequest,
+    interests,
     saveAction: `/${req.language}/feedback/${requestId}/save`,
     submitAction: `/${req.language}/feedback/${requestId}/submit`,
+  });
+});
+
+app.get("/:lng/feedback/:requestId/view", async function (req, res) {
+  const requestId = req.params.requestId;
+  const feedbackRequest = await getFeedbackRequest(requestId);
+  if (!feedbackRequest) {
+    res.sendStatus(404);
+    return;
+  }
+  const person = await getPerson(
+    feedbackRequest.personId,
+    feedbackRequest.personType,
+  );
+  const interests = await getInterests(feedbackRequest.personId);
+  res.render("feedback-view", {
+    request: feedbackRequest,
+    interests,
+    person,
   });
 });
 
@@ -158,6 +197,20 @@ app.post("/:lng/feedback/:requestId/save", async function (req, res) {
     console.error(error);
     res.sendStatus(500);
   }
+});
+
+app.get("/:lng/feedback", async function (req, res) {
+  const feedbackRequests = await getFeedbackRequests();
+
+  res.render("feedback-requests", {
+    createRequestLink: `/${req.language}/feedback/request`,
+    feedbackRequests: feedbackRequests.map((r) => {
+      const person = getPerson(r.personId, r.personType);
+      r.person = person;
+      r.viewLink = createViewLink(r);
+      return r;
+    }),
+  });
 });
 
 app.listen(port, () => {

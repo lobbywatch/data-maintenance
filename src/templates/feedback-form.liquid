@@ -36,50 +36,52 @@
           <th>{{ 'feedbackForm_tableHeader_kind' | t }}</th>
           <th>{{ 'feedbackForm_tableHeader_function' | t }}</th>
           <th>{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
+          <th>{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        {% for ib in interessenBindungen %}
+        {% for interest in interests %}
           <tr>
-            <td>{{ ib.kind }}</td>
-            <td>{{ ib.function }}</td>
-            <td>{{ ib.organisationName }}</td>
+            <td>{{ interest.kind }}</td>
+            <td>{{ interest.function }}</td>
+            <td>{{ interest.organisationName }}</td>
+            <td>{{ interest.organisationLegalForm }}</td>
             <td>
               <fieldset>
                 <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
-                {% capture rid %}response_{{ ib.id }}{% endcapture %}
+                {% capture rid %}response_{{ interest.id }}{% endcapture %}
                 <div>
-                  <label for="response_ok_{{ ib.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
+                  <label for="response_ok_{{ interest.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
                   <input
                     required
                     type="radio"
                     value="ok"
                     name="{{ rid }}"
-                    {{ feedback[ib.id].response == 'ok' | if_true: 'checked' }}
-                    id="response_ok_{{ ib.id }}"
+                    {{ request.feedback[interest.id].response == 'ok' | if_true: 'checked' }}
+                    id="response_ok_{{ interest.id }}"
                   >
                 </div>
                 <div>
-                  <label for="response_wrong_{{ ib.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
+                  <label for="response_wrong_{{ interest.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
                   <input
                     required
                     type="radio"
                     value="wrong"
                     name="{{ rid }}"
-                    {{ feedback[ib.id].response == 'wrong' | if_true: 'checked' }}
-                    id="response_wrong_{{ ib.id }}"
+                    {{ request.feedback[interest.id].response == 'wrong' | if_true: 'checked' }}
+                    id="response_wrong_{{ interest.id }}"
                   >
                 </div>
                 <div>
-                  {% capture cid %}comment_{{ ib.id }}{% endcapture %}
+                  {% capture cid %}comment_{{ interest.id }}{% endcapture %}
                   <label for="{{ cid }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
                   <textarea
                     cols="40"
                     rows="3"
                     name="{{ cid }}"
                     id="{{ cid }}"
-                  >{{feedback[ib.id].comment}}</textarea>
+                  >{{ request.feedback[interest.id].comment}}</textarea>
                 </div>
               </fieldset>
             </td>

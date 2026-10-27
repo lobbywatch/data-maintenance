@@ -1,0 +1,33 @@
+{% layout 'logged-in-layout.liquid' %}
+{% block view %}
+  <h1>{{ 'feedbackRequests_headline' | t }}</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>{{ 'requests_tableHeader_state' | t }}</th>
+        <th>{{ 'tableHeader_firstName' | t }}</th>
+        <th>{{ 'tableHeader_lastName' | t }}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for request in feedbackRequests %}
+        <tr>
+          <td>{{ request.state }}</td>
+          <td>{{ request.person.firstName }}</td>
+          <td>{{ request.person.lastName }}</td>
+          <td>
+            <a href="{{ request.viewLink }}">{{ 'feedbackRequests_viewLink_text' | t }}</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4">{{ 'feedbackRequests_noRequests_text' | t }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>
+    <a href="{{ createRequestLink }}">{{ 'feedbackRequests_createRequestLink_text' | t }}</a>
+  </p>
+{% endblock %}

@@ -1,6 +1,8 @@
 :root {
-  --bg-color: #fff;
-  --zebra-color: #e0e0e0;
+  --bg-color: #e5e5e5; /* from lobbywatch.ch */
+  --zebra-color: #d3d3d3;
+  --brand-color: #7acef4; /* light blue from logo */
+  --brand-color-dark: #153770; /* dark blue from lobbywatch.ch */
 }
 
 * {
@@ -16,6 +18,10 @@ body {
 table {
   table-layout: fixed;
   border-collapse: collapse;
+}
+
+tbody tr:nth-of-type(odd) {
+  background: var(--zebra-color);
 }
 
 .content {
@@ -39,4 +45,12 @@ nav ul {
   list-style: none;
   padding: 0;
   text-align: right;
+}
+
+button {
+  background-color: var(--brand-color);
+}
+
+a {
+  color: var(--brand-color-dark);
 }
