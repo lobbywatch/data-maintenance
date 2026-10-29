@@ -24,6 +24,7 @@
     "i18next-mf2": "2.1.1",
     "liquidjs": "10.30.0",
     "mariadb": "3.5.4",
+    "messageformat": "4.1.0",
     "winston": "3.19.0"
   },
   "devDependencies": {

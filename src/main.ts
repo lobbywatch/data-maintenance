@@ -1,8 +1,5 @@
 import express, { type Express } from "express";
 import helmet from "helmet";
-import i18next from "i18next";
-import MF2 from "i18next-mf2";
-import * as i18nextmiddleware from "i18next-http-middleware";
 import { Liquid } from "liquidjs";
 import bodyParser from "body-parser";
 import { getPersons, getInterests, getPerson } from "./data.ts";
@@ -20,6 +17,7 @@ import {
   parsePartialFeedback,
   saveFeedback,
 } from "./feedback.ts";
+import * as i18n from "./i18n.ts";
 
 const app: Express = express();
 
@@ -27,14 +25,19 @@ const port = 3000;
 
 app.use(bodyParser.urlencoded());
 
-const engine = new Liquid();
+const engine = new Liquid({
+  cache: process.env.NODE_ENV === "production",
+});
+
 engine.registerFilter("t", function (key: string, options) {
-  return i18next.t(key, options);
+  const t = this.context.environments.t ?? this.context.environments.lang.t;
+  return t(key, options);
 });
 
 engine.registerFilter("if_true", (condition, truthyValue) => {
   return condition ? truthyValue : "";
 });
+
 engine.registerFilter("currency", (value) => {
   return new Intl.NumberFormat("ch-DE", {
     style: "currency",
@@ -42,72 +45,10 @@ engine.registerFilter("currency", (value) => {
   }).format(value);
 });
 
-// TODO make it work and put it into separate module
-i18next
-  .use(MF2)
-  .use(i18nextmiddleware.LanguageDetector)
-  .init({
-    fallbackLng: "de",
-    preload: ["de", "fr"],
-    debug: true,
-    detection: { order: ["path"] },
-    resources: {
-      de: {
-        translation: {
-          table_newFeedbackButton: "Rückmeldung anfragen",
-          tableHeader_lastName: "Nachname",
-          tableHeader_firstName: "Vorname",
-          navTitle_feedback: "Rückmeldungen",
-          navTitle_logout: "Ausloggen",
-          feedbackForm_header_text: "Ihre Interessenbindungen",
-          feedbackForm_tableHeader_kind: "Art",
-          feedbackForm_tableHeader_function: "Funktion",
-          feedbackForm_tableHeader_organisationName: "Organisation",
-          feedbackForm_tableHeader_organisationLegalForm: "Rechtsform",
-          feedbackForm_response_legend: "Ihre Rückmeldung",
-          feedbackForm_responseLabel_ok: "Stimmt",
-          feedbackForm_responseLabel_wrong: "Falsch",
-          feedbackForm_responseLabel_comment: "Kommentar",
-          feedbackForm_submitButton_label: "Abschliessen",
-          feedbackForm_saveButton_label: "Speichern",
-          feedbackRequests_headline: "Offene Rückmeldungsanfragen",
-          requests_tableHeader_state: "Status",
-          feedbackView_header_text:
-            "Rückmeldungen von {$firstName} {$lastName}",
-          feedbackView_tableHeader_kind: "Art",
-          feedbackView_tableHeader_function: "Funktion",
-          feedbackView_tableHeader_organisationName: "Organisation",
-          feedbackView_tableHeader_organisationLegalForm: "Rechtsform",
-          feedbackView_tableHeader_compensation: "Vergütung",
-          feedbackView_tableHeader_compensationDescription: "Beschreibung",
-          feedbackView_tableHeader_form: "Rückmeldung",
-          feedbackView_tableHeader_response: "Antwort",
-          feedbackView_tableHeader_comment: "Kommentar",
-          feedbackRequests_viewLink_text: "Anschauen",
-          feedbackRequests_createRequestLink_text: "Rückmeldung anfragen",
-          feedbackRequests_noRequests_text: "Keine Anfragen vorhanden",
-          feedback_already_complete:
-            "Diese Rückmeldungen können nicht mehr bearbeitet werden.",
-          feedback_complete_header: "Danke!",
-          feedback_complete_text: "Wir haben Ihre Rückmeldungen erhalten.",
-        },
-      },
-      fr: {
-        translation: {
-          table_newFeedbackButton: "demander commentaires",
-          tableHeader_lastName: "nom",
-          tableHeader_firstName: "prènom",
-          navTitle_feedback: "commentaires",
-          navTitle_logout: "se déconnecter",
-        },
-      },
-    },
-  });
-
-app.use(
-  i18nextmiddleware.handle(i18next, {
+app.param(
+  "lng",
+  i18n.param({
     ignoreRoutes: ["/.well-known", "/favicon.ico", "/style.css", "/callback"],
-    removeLngFromUrl: false,
   }),
 );
 
@@ -136,8 +77,8 @@ app.get("/", function (req, res) {
 
 app.get("/:lng", async function (req, res) {
   res.render("index", {
+    t: res.t,
     user: req.oidc.user,
-    lang: req.language,
   });
 });
 
@@ -145,7 +86,7 @@ app.get("/:lng/feedback/request", async function (req, res) {
   const mps = await getPersons();
   res.render("feedback", {
     mps,
-    lang: req.language,
+    t: res.t,
     action: `/${req.language}/feedback/createRequest`,
   });
 });
@@ -155,7 +96,7 @@ app.post("/:lng/feedback/createRequest", async function (req, res) {
     const feedbackRequest = await createFeedbackRequest(req.body);
     const secretLink = createSecretLink(feedbackRequest);
     const text = await getFeedbackRequestText(secretLink);
-    res.render("feedback-request-created", { text, secretLink });
+    res.render("feedback-request-created", { t: res.t, text, secretLink });
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
@@ -170,15 +111,15 @@ app.get("/:lng/feedback/:requestId/form", async function (req, res) {
     return;
   }
 
-  console.log(feedbackRequest);
   if (feedbackRequest.state === "complete") {
-    res.render("feedback-already-complete");
+    res.render("feedback-already-complete", { t: res.t });
     return;
   }
 
   const interests = await getInterests(feedbackRequest.personId);
 
   res.render("feedback-form", {
+    t: res.t,
     request: feedbackRequest,
     interests,
     saveAction: `/${req.language}/feedback/${requestId}/save`,
@@ -199,6 +140,7 @@ app.get("/:lng/feedback/:requestId/view", async function (req, res) {
   );
   const interests = await getInterests(feedbackRequest.personId);
   res.render("feedback-view", {
+    t: res.t,
     request: feedbackRequest,
     interests,
     person,
@@ -245,6 +187,8 @@ app.get("/:lng/feedback", async function (req, res) {
   const feedbackRequests = await getFeedbackRequests();
 
   res.render("feedback-requests", {
+    t: res.t,
+    lang: new i18n.LanguageDrop(req.language, res.t),
     createRequestLink: `/${req.language}/feedback/request`,
     feedbackRequests: feedbackRequests.map((request) => {
       const person = getPerson(request.personId, request.personType);
