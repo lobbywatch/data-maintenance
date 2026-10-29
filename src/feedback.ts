@@ -39,15 +39,15 @@ export const feedbackRequestSchema = Schema.Union([
     personId: Schema.Finite,
     personType: PersonSchema.fields.type,
     requestId: Schema.String,
-    createdAt: Schema.DateFromString,
+    createdAt: Schema.String, // TODO find something like zod's z.iso.datetime()
   }),
   Schema.Struct({
     state: Schema.Literal("partial"),
     personId: Schema.Finite,
     personType: PersonSchema.fields.type,
     requestId: Schema.String,
-    createdAt: Schema.DateFromString,
-    updatedAt: Schema.DateFromString,
+    createdAt: Schema.String, // TODO find something like zod's z.iso.datetime()
+    updatedAt: Schema.String, // TODO find something like zod's z.iso.datetime()
     feedback: partialFeedbackSchema,
   }),
   Schema.Struct({
@@ -55,8 +55,8 @@ export const feedbackRequestSchema = Schema.Union([
     personId: Schema.Finite,
     personType: PersonSchema.fields.type,
     requestId: Schema.String,
-    createdAt: Schema.DateFromString,
-    updatedAt: Schema.DateFromString,
+    createdAt: Schema.String, // TODO find something like zod's z.iso.datetime()
+    updatedAt: Schema.String, // TODO find something like zod's z.iso.datetime()
     feedback: completeFeedbackSchema,
   }),
 ]);
