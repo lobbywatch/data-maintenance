@@ -119,6 +119,7 @@ app.set("view engine", "liquid");
 
 app.use(helmet());
 app.use("/", express.static("static"));
+app.use("/ui", express.static("src/ui"));
 app.use(
   auth({
     issuerBaseURL: get("oidc_server"),
