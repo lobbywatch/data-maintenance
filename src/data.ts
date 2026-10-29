@@ -18,6 +18,8 @@ const InterestSchema = Schema.Struct({
   ),
   organisationName: Schema.String,
   organisationLegalForm: Schema.String,
+  compensation: Schema.Finite,
+  compensationDescription: Schema.NullOr(Schema.String),
 });
 
 type Interest = Schema.Schema.Type<typeof InterestSchema>;
@@ -85,14 +87,17 @@ export async function getPerson(
 
 export async function getInterests(personId: number): Promise<Interest[]> {
   const connection = await pool.getConnection();
+  const year = new Date().getFullYear() - 1; // assuming feedbacks are requested in late winter/early spring
   const rows = await connection.query<
     { id: number; vorname: string; nachname: string }[]
   >(
-    "SELECT ib.id as id, ib.art, ib.funktion_im_gremium, o.name_de AS org_name_de, o.rechtsform AS org_legal_form \
+    "SELECT ib.id as id, ib.art, ib.funktion_im_gremium, o.name_de AS org_name_de, o.rechtsform AS org_legal_form, ibj.beschreibung, ibj.verguetung \
     FROM interessenbindung ib \
     JOIN organisation o ON ib.organisation_id = o.id \
-     WHERE parlamentarier_id = ?",
-    [personId],
+    JOIN interessenbindung_jahr ibj ON ib.id = ibj.interessenbindung_id \
+     WHERE ibj.jahr = ? AND parlamentarier_id = ? \
+     ORDER BY org_name_de",
+    [year, personId],
   );
   connection.end();
   return Schema.decodeUnknownSync(Schema.Array(InterestSchema))(
@@ -102,6 +107,8 @@ export async function getInterests(personId: number): Promise<Interest[]> {
       function: row.funktion_im_gremium,
       organisationName: row.org_name_de,
       organisationLegalForm: row.org_legal_form,
+      compensation: row.verguetung,
+      compensationDescription: row.beschreibung,
     })),
     { errors: "all", reportInput: true },
   );
