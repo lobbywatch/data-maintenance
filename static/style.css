@@ -3,6 +3,22 @@
   --zebra-color: #d3d3d3;
   --brand-color: #7acef4; /* light blue from logo */
   --brand-color-dark: #153770; /* dark blue from lobbywatch.ch */
+
+  /* modular scale */
+  --ratio: 1.5;
+  --s-5: calc(var(--s-4) / var(--ratio));
+  --s-4: calc(var(--s-3) / var(--ratio));
+  --s-3: calc(var(--s-2) / var(--ratio));
+  --s-2: calc(var(--s-1) / var(--ratio));
+  --s-1: calc(var(--s0) / var(--ratio));
+  --s0: 0.5rem;
+  --s1: calc(var(--s0) * var(--ratio));
+  --s2: calc(var(--s1) * var(--ratio));
+  --s3: calc(var(--s2) * var(--ratio));
+  --s4: calc(var(--s3) * var(--ratio));
+  --s5: calc(var(--s4) * var(--ratio));
+
+  font-size: calc(1rem + 0.2vw);
 }
 
 * {
@@ -22,6 +38,11 @@ table {
 
 tbody tr:nth-of-type(odd) {
   background: var(--zebra-color);
+}
+
+td {
+  padding-block: var(--s-1);
+  padding-inline: var(--s1);
 }
 
 .content {
@@ -49,6 +70,13 @@ nav ul {
 
 button {
   background-color: var(--brand-color);
+  padding-block: var(--s-1);
+  padding-inline: var(--s1);
+  font-size: medium;
+}
+
+label {
+  padding: var(--s1);
 }
 
 a {
