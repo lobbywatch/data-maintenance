@@ -35,6 +35,7 @@ engine.registerFilter("t", function (key: string, options) {
 engine.registerFilter("if_true", (condition, truthyValue) => {
   return condition ? truthyValue : "";
 });
+
 engine.registerFilter("currency", (value) => {
   return new Intl.NumberFormat("ch-DE", {
     style: "currency",
@@ -68,7 +69,7 @@ i18next
           feedbackForm_responseLabel_ok: "Stimmt",
           feedbackForm_responseLabel_wrong: "Falsch",
           feedbackForm_responseLabel_comment: "Kommentar",
-          feedbackForm_submitButton_label: "Abschliessen",
+          feedbackForm_completeButton_label: "Abschliessen",
           feedbackForm_saveButton_label: "Speichern",
           feedbackRequests_headline: "Offene Rückmeldungsanfragen",
           requests_tableHeader_state: "Status",
@@ -86,10 +87,11 @@ i18next
           feedbackRequests_viewLink_text: "Anschauen",
           feedbackRequests_createRequestLink_text: "Rückmeldung anfragen",
           feedbackRequests_noRequests_text: "Keine Anfragen vorhanden",
-          feedback_already_complete:
+          feedback_already_completed_text:
             "Diese Rückmeldungen können nicht mehr bearbeitet werden.",
-          feedback_complete_header: "Danke!",
-          feedback_complete_text: "Wir haben Ihre Rückmeldungen erhalten.",
+          feedback_complete_header: "Danke",
+          feedback_complete_text:
+            "Wir haben Ihre Rückmeldungen erhalten. Sie können diesen Tab nun schliessen.",
         },
       },
       fr: {
@@ -170,7 +172,6 @@ app.get("/:lng/feedback/:requestId/form", async function (req, res) {
     return;
   }
 
-  console.log(feedbackRequest);
   if (feedbackRequest.state === "complete") {
     res.render("feedback-already-complete");
     return;
@@ -182,7 +183,7 @@ app.get("/:lng/feedback/:requestId/form", async function (req, res) {
     request: feedbackRequest,
     interests,
     saveAction: `/${req.language}/feedback/${requestId}/save`,
-    submitAction: `/${req.language}/feedback/${requestId}/submit`,
+    completeAction: `/${req.language}/feedback/${requestId}/complete`,
   });
 });
 
@@ -223,7 +224,7 @@ app.post("/:lng/feedback/:requestId/save", async function (req, res) {
   }
 });
 
-app.post("/:lng/feedback/:requestId/submit", async function (req, res) {
+app.post("/:lng/feedback/:requestId/complete", async function (req, res) {
   try {
     const feedbackRequest = await getFeedbackRequest(req.params.requestId);
     if (!feedbackRequest) {
@@ -234,7 +235,7 @@ app.post("/:lng/feedback/:requestId/submit", async function (req, res) {
     feedbackRequest.state = "complete";
     feedbackRequest.feedback = feedback;
     await saveFeedback(feedbackRequest);
-    res.render("");
+    res.render("feedback-completed");
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
