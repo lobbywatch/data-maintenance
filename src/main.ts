@@ -35,6 +35,12 @@ engine.registerFilter("t", function (key: string, options) {
 engine.registerFilter("if_true", (condition, truthyValue) => {
   return condition ? truthyValue : "";
 });
+engine.registerFilter("currency", (value) => {
+  return new Intl.NumberFormat("ch-DE", {
+    style: "currency",
+    currency: "CHF",
+  }).format(value);
+});
 
 // TODO make it work and put it into separate module
 i18next
@@ -72,6 +78,9 @@ i18next
           feedbackView_tableHeader_function: "Funktion",
           feedbackView_tableHeader_organisationName: "Organisation",
           feedbackView_tableHeader_organisationLegalForm: "Rechtsform",
+          feedbackView_tableHeader_compensation: "Vergütung",
+          feedbackView_tableHeader_compensationDescription: "Beschreibung",
+          feedbackView_tableHeader_form: "Rückmeldung",
           feedbackView_tableHeader_response: "Antwort",
           feedbackView_tableHeader_comment: "Kommentar",
           feedbackRequests_viewLink_text: "Anschauen",

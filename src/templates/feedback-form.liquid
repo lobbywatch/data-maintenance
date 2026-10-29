@@ -19,10 +19,15 @@
         background: var(--bg-color);
       }
 
+      th.limited {
+        width: 15%;
+      }
+
       div.formbuttons {
         position: sticky;
         bottom: 0;
         background: var(--bg-color);
+        padding-block: var(--s1);
       }
     }
   </style>
@@ -35,9 +40,11 @@
         <tr>
           <th>{{ 'feedbackForm_tableHeader_kind' | t }}</th>
           <th>{{ 'feedbackForm_tableHeader_function' | t }}</th>
-          <th>{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
+          <th class="limited">{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
           <th>{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
-          <th></th>
+          <th>{{ 'feedbackView_tableHeader_compensation' | t }}</th>
+          <th class="limited">{{ 'feedbackView_tableHeader_compensationDescription' | t }}</th>
+          <th>{{ 'feedbackView_tableHeader_form' | t }}</th>
         </tr>
       </thead>
       <tbody>
@@ -47,6 +54,8 @@
             <td>{{ interest.function }}</td>
             <td>{{ interest.organisationName }}</td>
             <td>{{ interest.organisationLegalForm }}</td>
+            <td>{{ interest.compensation | currency }}</td>
+            <td>{{ interest.compensationDescription }}</td>
             <td>
               <fieldset>
                 <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
