@@ -7,6 +7,9 @@
     tr:has(td.wrong) {
       background-color: #ff8989;
     }
+    th.limited {
+      width: 15%;
+    }
   </style>
 {% endblock %}
 {% block view %}
@@ -16,10 +19,9 @@
       <tr>
         <th>{{ 'feedbackView_tableHeader_kind' | t }}</th>
         <th>{{ 'feedbackView_tableHeader_function' | t }}</th>
-        <th>{{ 'feedbackView_tableHeader_organisationName' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_organisationName' | t }}</th>
         <th>{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
-        <th>{{ 'feedbackView_tableHeader_compensation' | t }}</th>
-        <th>{{ 'feedbackView_tableHeader_compensationDescription' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_compensation' | t }}</th>
         <th>{{ 'feedbackView_tableHeader_response' | t }}</th>
         <th>{{ 'feedbackView_tableHeader_comment' | t }}</th>
       </tr>
@@ -31,8 +33,7 @@
           <td>{{ interest.function }}</td>
           <td>{{ interest.organisationName }}</td>
           <td>{{ interest.organisationLegalForm }}</td>
-          <td>{{ interest.compensation | currency }}</td>
-          <td>{{ interest.compensationDescription }}</td>
+          <td>{{ interest | format_compensation }}</td>
           <td class="{{ request.feedback[interest.id].response }}">
             {{ request.feedback[interest.id].response }}
           </td>

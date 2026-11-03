@@ -2,6 +2,13 @@ import mariadb from "mariadb";
 import * as config from "./config.ts";
 import { Schema } from "effect";
 
+const CompensationSchema = Schema.Struct({
+  type: Schema.Literals(["paid", "paidUnknown", "volunteer", "payingMember"]),
+  amount: Schema.Finite,
+  description: Schema.NullOr(Schema.String),
+});
+type Compsensation = Schema.Schema.Type<typeof CompensationSchema>;
+
 const InterestSchema = Schema.Struct({
   id: Schema.Number,
   kind: Schema.Literals([
@@ -18,18 +25,16 @@ const InterestSchema = Schema.Struct({
   ),
   organisationName: Schema.String,
   organisationLegalForm: Schema.String,
-  compensation: Schema.Finite,
-  compensationDescription: Schema.NullOr(Schema.String),
+  compensation: CompensationSchema,
 });
-
 type Interest = Schema.Schema.Type<typeof InterestSchema>;
+
 export const PersonSchema = Schema.Struct({
   type: Schema.Literals(["lobbyist", "mp"]),
   id: Schema.Number,
   firstName: Schema.String,
   lastName: Schema.String,
 });
-
 export type Person = Schema.Schema.Type<typeof PersonSchema>;
 
 const pool = mariadb.createPool({
@@ -108,6 +113,7 @@ export async function getInterests(personId: number): Promise<Interest[]> {
     [year, personId],
   );
   connection.end();
+
   return Schema.decodeUnknownSync(Schema.Array(InterestSchema))(
     rows.map((row) => ({
       id: row.id,
@@ -115,9 +121,37 @@ export async function getInterests(personId: number): Promise<Interest[]> {
       function: row.funktion_im_gremium,
       organisationName: row.org_name_de,
       organisationLegalForm: row.org_legal_form,
-      compensation: row.verguetung,
-      compensationDescription: row.beschreibung,
+      compensation: {
+        type: getCompensationType(row.verguetung),
+        description: cleanBeschreibung(row.beschreibung),
+        amount: row.verguetung,
+      },
     })),
     { errors: "all", reportInput: true },
   );
+}
+
+function getCompensationType(verguetung: Number): Compsensation["type"] {
+  switch (verguetung) {
+    case -1:
+      return "payingMember";
+    case 0:
+      return "volunteer";
+    case 1:
+      return "paidUnknown";
+    default:
+      return "paid";
+  }
+}
+
+function cleanBeschreibung(beschreibung: string): string | null {
+  // do not return redundant descriptions, i.e.d those which are already encoded in the compensation itself, see formatCompensation() above
+  if (
+    beschreibung === "Bezahlt" ||
+    beschreibung === "Bezahlendes Mitglied" ||
+    beschreibung === "Ehrenamtlich"
+  ) {
+    return null;
+  }
+  return beschreibung;
 }
