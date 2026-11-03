@@ -92,6 +92,11 @@ i18next
           feedback_complete_header: "Danke",
           feedback_complete_text:
             "Wir haben Ihre Rückmeldungen erhalten. Sie können diesen Tab nun schliessen.",
+          interests_compensation_payingMember: "Zahlendes Mitglied",
+          interests_compensation_volunteer: "Ehrenamtlich",
+          interests_compensation_paidUnknown: "Bezahlt, Betrag unbekannt",
+          interests_compensation_paid:
+            "Bezahlt, Betrag {$amount :currency currency=CHF}",
         },
       },
       fr: {

@@ -44,7 +44,6 @@
           <th class="limited">{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
           <th>{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
           <th>{{ 'feedbackView_tableHeader_compensation' | t }}</th>
-          <th class="limited">{{ 'feedbackView_tableHeader_compensationDescription' | t }}</th>
           <th>{{ 'feedbackView_tableHeader_form' | t }}</th>
         </tr>
       </thead>
@@ -55,8 +54,14 @@
             <td>{{ interest.function }}</td>
             <td>{{ interest.organisationName }}</td>
             <td>{{ interest.organisationLegalForm }}</td>
-            <td>{{ interest.compensation | currency }}</td>
-            <td>{{ interest.compensationDescription }}</td>
+            <td>
+              {% capture key %}interests_compensation_{{ interest.compensation.type }}{% endcapture %}
+              {{ key | t: interest.compensation }}
+              {% if interest.compensation.description %}
+                <br>
+                <i>{{ interest.compensation.description }}</i>
+              {% endif %}
+            </td>
             <td>
               <fieldset>
                 <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
