@@ -89,7 +89,15 @@ export async function getInterests(personId: number): Promise<Interest[]> {
   const connection = await pool.getConnection();
   const year = new Date().getFullYear() - 1; // assuming feedbacks are requested in late winter/early spring
   const rows = await connection.query<
-    { id: number; vorname: string; nachname: string }[]
+    {
+      id: number;
+      art: string;
+      funktion_im_gremium: string;
+      org_name_de: string;
+      org_legal_form: string;
+      verguetung: number;
+      beschreibung: string;
+    }[]
   >(
     "SELECT ib.id as id, ib.art, ib.funktion_im_gremium, o.name_de AS org_name_de, o.rechtsform AS org_legal_form, ibj.beschreibung, ibj.verguetung \
     FROM interessenbindung ib \
