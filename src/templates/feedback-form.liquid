@@ -56,6 +56,7 @@
             <td>{{ interest.organisationLegalForm }}</td>
             <td>
               {% if interest.compensation.type == 'paidUnknown' %}
+                <!-- TODO use some other/custom element here -->
                 <abbr title="{{ 'interests_compensation_tooltip'| t }}">❓</abbr>
               {% endif %}
               {% capture key %}interests_compensation_{{ interest.compensation.type }}{% endcapture %}
