@@ -33,7 +33,14 @@
           <td>{{ interest.function }}</td>
           <td>{{ interest.organisationName }}</td>
           <td>{{ interest.organisationLegalForm }}</td>
-          <td>{{ interest | format_compensation }}</td>
+          <td>
+            {% capture key %}interests_compensation_{{ interest.compensation.type }}{% endcapture %}
+            {{ key | t: interest.compensation }}
+            {% if interest.compensation.description %}
+              <br>
+              <i>{{ interest.compensation.description }}</i>
+            {% endif %}
+          </td>
           <td class="{{ request.feedback[interest.id].response }}">
             {{ request.feedback[interest.id].response }}
           </td>
