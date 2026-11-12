@@ -96,7 +96,7 @@ i18next
           interests_compensation_volunteer: "Ehrenamtlich",
           interests_compensation_paidUnknown: "Bezahlt, Betrag unbekannt",
           interests_compensation_paid:
-            "Bezahlt, Betrag {$amount :currency currency=CHF}",
+            "Bezahlt, Betrag: {$amount :currency currency=CHF}",
           interests_compensation_tooltip:
             "Hier fehlen uns genauere Angaben, teile Sie diese doch mit uns",
         },
