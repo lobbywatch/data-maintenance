@@ -36,6 +36,7 @@
 {% block content %}
   <h1>{{ 'feedbackForm_header_text' | t }}</h1>
   <form method="post">
+    <h2>Mandate</h2>
     <table>
       <thead>
         <tr>
@@ -48,7 +49,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for interest in interests %}
+        {% for interest in interests.mandates %}
           <tr>
             <td>{{ interest.kind }}</td>
             <td>{{ interest.function }}</td>
@@ -93,7 +94,79 @@
                   >
                 </div>
                 <div hidden>
+                  {% capture cid %}comment_{{ interest.id }}{% endcapture %}
+                  <label for="{{ cid }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
+                  <textarea
+                    cols="40"
+                    rows="3"
+                    name="{{ cid }}"
+                    id="{{ cid }}"
+                  >{{ request.feedback[interest.id].comment}}</textarea>
+                </div>
+              </fieldset>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h2>Mitgliedschaften</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="limited">{{ 'feedbackForm_tableHeader_kind' | t }}</th>
+          <th class="limited">{{ 'feedbackForm_tableHeader_function' | t }}</th>
+          <th>{{ 'feedbackForm_tableHeader_organisationName' | t }}</th>
+          <th class="limited">{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
+          <th>{{ 'feedbackView_tableHeader_compensation' | t }}</th>
+          <th>{{ 'feedbackView_tableHeader_form' | t }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for interest in interests.memberships %}
+          <tr>
+            <td>{{ interest.kind }}</td>
+            <td>{{ interest.function }}</td>
+            <td>{{ interest.organisationName }}</td>
+            <td>{{ interest.organisationLegalForm }}</td>
+            <td>
+              {% if interest.compensation.type == 'paidUnknown' %}
+                <!-- TODO use some other/custom element here -->
+                <abbr title="{{ 'interests_compensation_tooltip'| t }}">❓</abbr>
+              {% endif %}
+              {% capture key %}interests_compensation_{{ interest.compensation.type }}{% endcapture %}
+              {{ key | t: interest.compensation }}
+              {% if interest.compensation.description %}
+                <br>
+                <i>{{ interest.compensation.description }}</i>
+              {% endif %}
+            </td>
+            <td>
+              <fieldset>
+                <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
+                {% capture rid %}response_{{ interest.id }}{% endcapture %}
                 <div>
+                  <label for="response_ok_{{ interest.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
+                  <input
+                    required
+                    type="radio"
+                    value="ok"
+                    name="{{ rid }}"
+                    {{ request.feedback[interest.id].response == 'ok' | if_true: 'checked' }}
+                    id="response_ok_{{ interest.id }}"
+                  >
+                </div>
+                <div>
+                  <label for="response_wrong_{{ interest.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
+                  <input
+                    required
+                    type="radio"
+                    value="wrong"
+                    name="{{ rid }}"
+                    {{ request.feedback[interest.id].response == 'wrong' | if_true: 'checked' }}
+                    id="response_wrong_{{ interest.id }}"
+                  >
+                </div>
+                <div hidden>
                   {% capture cid %}comment_{{ interest.id }}{% endcapture %}
                   <label for="{{ cid }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
                   <textarea

@@ -14,6 +14,7 @@
 {% endblock %}
 {% block view %}
   <h1>{{ 'feedbackView_header_text' | t: person }}</h1>
+  <h2>Mandate</h2>
   <table>
     <thead>
       <tr>
@@ -27,7 +28,45 @@
       </tr>
     </thead>
     <tbody>
-      {% for interest in interests %}
+      {% for interest in interests.mandates %}
+        <tr>
+          <td>{{ interest.kind }}</td>
+          <td>{{ interest.function }}</td>
+          <td>{{ interest.organisationName }}</td>
+          <td>{{ interest.organisationLegalForm }}</td>
+          <td>
+            {% capture key %}interests_compensation_{{ interest.compensation.type }}{% endcapture %}
+            {{ key | t: interest.compensation }}
+            {% if interest.compensation.description %}
+              <br>
+              <i>{{ interest.compensation.description }}</i>
+            {% endif %}
+          </td>
+          <td class="{{ request.feedback[interest.id].response }}">
+            {{ request.feedback[interest.id].response }}
+          </td>
+          <td>
+            {{ request.feedback[interest.id].comment }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>Einfache Mitgliedschaften</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="limited">{{ 'feedbackView_tableHeader_kind' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_function' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_organisationName' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_compensation' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_response' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_comment' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for interest in interests.memberships %}
         <tr>
           <td>{{ interest.kind }}</td>
           <td>{{ interest.function }}</td>

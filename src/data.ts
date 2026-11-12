@@ -9,6 +9,16 @@ const CompensationSchema = Schema.Struct({
 });
 type Compsensation = Schema.Schema.Type<typeof CompensationSchema>;
 
+// payingMember is shown in separate table
+const INTEREST_TABLE_SORT_ORDER: Record<
+  Exclude<Compsensation["type"], "payingMember">,
+  number
+> = {
+  paid: 0,
+  paidUnknown: -1,
+  volunteer: 1,
+};
+
 const InterestSchema = Schema.Struct({
   id: Schema.Number,
   kind: Schema.Literals([
@@ -90,7 +100,9 @@ export async function getPerson(
   throw new Error(`found multiple persons for ${id}, ${type}`);
 }
 
-export async function getInterests(personId: number): Promise<Interest[]> {
+export async function getInterests(
+  personId: number,
+): Promise<{ memberships: Interest[]; mandates: Interest[] }> {
   const connection = await pool.getConnection();
   const year = new Date().getFullYear() - 1; // assuming feedbacks are requested in late winter/early spring
   const rows = await connection.query<
@@ -114,7 +126,7 @@ export async function getInterests(personId: number): Promise<Interest[]> {
   );
   connection.end();
 
-  return Schema.decodeUnknownSync(Schema.Array(InterestSchema))(
+  const interests = Schema.decodeUnknownSync(Schema.Array(InterestSchema))(
     rows.map((row) => ({
       id: row.id,
       kind: row.art,
@@ -129,6 +141,19 @@ export async function getInterests(personId: number): Promise<Interest[]> {
     })),
     { errors: "all", reportInput: true },
   );
+
+  return {
+    memberships: interests.filter(
+      (interest) => interest.compensation.type === "payingMember",
+    ),
+    mandates: interests
+      .filter((interest) => interest.compensation.type !== "payingMember")
+      .sort(
+        (a, b) =>
+          INTEREST_TABLE_SORT_ORDER[a.compensation.type] -
+          INTEREST_TABLE_SORT_ORDER[b.compensation.type],
+      ),
+  };
 }
 
 function getCompensationType(verguetung: Number): Compsensation["type"] {
