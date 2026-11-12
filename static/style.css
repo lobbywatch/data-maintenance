@@ -19,8 +19,20 @@
   --s5: calc(var(--s4) * var(--ratio));
 }
 
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("/assets/AtkinsonHyperlegibleNext-Bold.woff2") format("woff2");
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("/assets/AtkinsonHyperlegibleNext-Regular.woff2") format("woff2");
+  font-weight: regular;
+}
+
 * {
-  font-family: sans;
+  font-family: "Atkinson Hyperlegible", sans-serif;
   box-sizing: border-box;
 }
 
