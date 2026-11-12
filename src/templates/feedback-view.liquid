@@ -8,7 +8,7 @@
       background-color: #ff8989;
     }
     th.limited {
-      width: 15%;
+      max-width: 5%;
     }
   </style>
 {% endblock %}
@@ -17,11 +17,11 @@
   <table>
     <thead>
       <tr>
-        <th>{{ 'feedbackView_tableHeader_kind' | t }}</th>
-        <th>{{ 'feedbackView_tableHeader_function' | t }}</th>
-        <th class="limited">{{ 'feedbackView_tableHeader_organisationName' | t }}</th>
-        <th>{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
-        <th class="limited">{{ 'feedbackView_tableHeader_compensation' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_kind' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_function' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_organisationName' | t }}</th>
+        <th class="limited">{{ 'feedbackView_tableHeader_organisationLegalForm' | t }}</th>
+        <th>{{ 'feedbackView_tableHeader_compensation' | t }}</th>
         <th>{{ 'feedbackView_tableHeader_response' | t }}</th>
         <th>{{ 'feedbackView_tableHeader_comment' | t }}</th>
       </tr>
