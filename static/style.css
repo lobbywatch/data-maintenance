@@ -86,7 +86,8 @@ button {
 }
 
 label {
-  padding: var(--s1);
+  margin-inline-end: var(--s1);
+  margin-inline-start: var(--s0);
 }
 
 a {

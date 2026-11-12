@@ -3,6 +3,8 @@
   <style>
     fieldset {
       display: flex;
+      flex-flow: row wrap;
+      gap: var(--s1);
     }
 
     tbody tr:nth-of-type(odd) {
@@ -12,23 +14,29 @@
     form {
       height: 90dvh;
       overflow: auto;
+    }
 
-      thead tr {
-        position: sticky;
-        top: 0;
-        background: var(--bg-color);
-      }
+    thead tr {
+      position: sticky;
+      top: 0;
+      background: var(--bg-color);
+    }
 
-      th.limited {
-        max-width: 5%;
-      }
+    th.limited {
+      max-width: 5%;
+    }
 
-      div.formbuttons {
-        position: sticky;
-        bottom: 0;
-        background: var(--bg-color);
-        padding-block: var(--s1);
-      }
+    .formcontrol:not([hidden]) {
+      display: flex;
+      flex-flow: row wrap;
+      align-items: flex-start;
+    }
+
+    div.formbuttons {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-color);
+      padding-block: var(--s1);
     }
   </style>
   <script src="/ui/form.js"></script>
@@ -71,8 +79,7 @@
               <fieldset>
                 <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
                 {% capture rid %}response_{{ interest.id }}{% endcapture %}
-                <div>
-                  <label for="response_ok_{{ interest.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
+                <div class="formcontrol">
                   <input
                     required
                     type="radio"
@@ -81,9 +88,9 @@
                     {{ request.feedback[interest.id].response == 'ok' | if_true: 'checked' }}
                     id="response_ok_{{ interest.id }}"
                   >
+                  <label for="response_ok_{{ interest.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
                 </div>
-                <div>
-                  <label for="response_wrong_{{ interest.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
+                <div class="formcontrol">
                   <input
                     required
                     type="radio"
@@ -92,8 +99,9 @@
                     {{ request.feedback[interest.id].response == 'wrong' | if_true: 'checked' }}
                     id="response_wrong_{{ interest.id }}"
                   >
+                  <label for="response_wrong_{{ interest.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
                 </div>
-                <div hidden>
+                <div class="formcontrol" hidden>
                   {% capture cid %}comment_{{ interest.id }}{% endcapture %}
                   <label for="{{ cid }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
                   <textarea
@@ -144,7 +152,7 @@
               <fieldset>
                 <legend>{{ 'feedbackForm_response_legend' | t }}</legend>
                 {% capture rid %}response_{{ interest.id }}{% endcapture %}
-                <div>
+                <div class="formcontrol">
                   <label for="response_ok_{{ interest.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
                   <input
                     required
@@ -155,7 +163,7 @@
                     id="response_ok_{{ interest.id }}"
                   >
                 </div>
-                <div>
+                <div class="formcontrol">
                   <label for="response_wrong_{{ interest.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
                   <input
                     required
@@ -166,7 +174,7 @@
                     id="response_wrong_{{ interest.id }}"
                   >
                 </div>
-                <div hidden>
+                <div class="formcontrol" hidden>
                   {% capture cid %}comment_{{ interest.id }}{% endcapture %}
                   <label for="{{ cid }}">{{ 'feedbackForm_responseLabel_comment' | t }}</label>
                   <textarea
