@@ -3,6 +3,7 @@
   --zebra-color: #d3d3d3;
   --brand-color: #7acef4; /* light blue from logo */
   --brand-color-dark: #153770; /* dark blue from lobbywatch.ch */
+  --border-radius: 0.5rem;
 
   /* modular scale */
   --ratio: 1.5;

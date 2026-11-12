@@ -38,6 +38,18 @@
       background: var(--bg-color);
       padding-block: var(--s1);
     }
+
+    details.unknown-compensation-hint {
+      display: inline;
+      summary {
+        display: inline;
+      }
+      span {
+        background-color: var(--brand-color);
+        padding: var(--s-1) var(--s1);
+        border-radius: var(--border-radius);
+      }
+    }
   </style>
   <script src="/ui/form.js"></script>
 {% endblock %}
@@ -64,15 +76,17 @@
             <td>{{ interest.organisationName }}</td>
             <td>{{ interest.organisationLegalForm }}</td>
             <td>
-              {% if interest.compensation.type == 'paidUnknown' %}
-                <!-- TODO use some other/custom element here -->
-                <abbr title="{{ 'interests_compensation_tooltip'| t }}">❓</abbr>
-              {% endif %}
               {% capture key %}interests_compensation_{{ interest.compensation.type }}{% endcapture %}
               {{ key | t: interest.compensation }}
               {% if interest.compensation.description %}
                 <br>
                 <i>{{ interest.compensation.description }}</i>
+              {% endif %}
+              {% if interest.compensation.type == 'paidUnknown' %}
+                <details class="unknown-compensation-hint">
+                  <summary><img width="30" height="30" src="/assets/the-all-seeking-eye.png" /></summary>
+                  <span>{{ 'interests_compensation_tooltip' | t }}</span>
+                </details>
               {% endif %}
             </td>
             <td>
