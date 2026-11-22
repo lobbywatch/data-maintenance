@@ -1,10 +1,53 @@
-import { identity, Schema } from "effect";
+import { Schema } from "effect";
 import { randomBytes } from "node:crypto";
 import { get } from "./config.ts";
 import type { DeepMutable } from "effect/Types";
 import { PersonSchema } from "./data.ts";
 
-const FEEDBACK_REQUESTS = new Map<string, FeedbackRequest>();
+type Versioned<T> = {
+  version: string;
+  data: T;
+};
+
+interface FeedbackPersister {
+  get(id: string): Promise<Versioned<FeedbackRequest> | undefined>;
+  getAll(): Promise<Array<Versioned<FeedbackRequest>>>;
+  save(request: FeedbackRequest): Promise<Versioned<FeedbackRequest>>;
+}
+
+class InMemoryPersister implements FeedbackPersister {
+  FEEDBACK_REQUESTS = new Map<string, FeedbackRequest>();
+  async save(request: FeedbackRequest): Promise<Versioned<FeedbackRequest>> {
+    if (
+      request.state === "new" &&
+      this.FEEDBACK_REQUESTS.has(request.requestId)
+    ) {
+      throw new Error("request already saved");
+    }
+    request.updatedAt = new Date().toISOString();
+    this.FEEDBACK_REQUESTS.set(
+      request.requestId,
+      Schema.decodeUnknownSync(feedbackRequestSchema)(request),
+    );
+    return { version: "TODO", data: request };
+  }
+
+  async get(id: string): Promise<Versioned<FeedbackRequest> | undefined> {
+    const request = this.FEEDBACK_REQUESTS.get(id);
+    if (!request) {
+      return;
+    }
+    return { version: "TODO", data: request };
+  }
+
+  async getAll() {
+    return this.FEEDBACK_REQUESTS.values()
+      .map((r) => ({ version: "TODO", data: r }))
+      .toArray();
+  }
+}
+
+const persister: FeedbackPersister = new InMemoryPersister();
 
 const feedbackFormFieldNameSchema = Schema.TemplateLiteralParser([
   Schema.Literals(["response", "comment"]),
@@ -40,6 +83,14 @@ export const feedbackRequestSchema = Schema.Union([
     personType: PersonSchema.fields.type,
     requestId: Schema.String,
     createdAt: Schema.String, // TODO find something like zod's z.iso.datetime()
+  }),
+  Schema.Struct({
+    state: Schema.Literal("sent"),
+    personId: Schema.Finite,
+    personType: PersonSchema.fields.type,
+    requestId: Schema.String,
+    createdAt: Schema.String, // TODO find something like zod's z.iso.datetime()
+    sentAt: Schema.String, // TODO find something like zod's z.iso.datetime()
   }),
   Schema.Struct({
     state: Schema.Literal("partial"),
@@ -87,25 +138,20 @@ export async function createFeedbackRequest(
     personType: "mp", // TODO
     createdAt: new Date().toISOString(),
   };
-  await saveFeedbackRequest(feedbackRequest);
+  await persister.save(feedbackRequest);
   return feedbackRequest;
-}
-
-async function saveFeedbackRequest(request: FeedbackRequest): Promise<void> {
-  if (FEEDBACK_REQUESTS.has(request.requestId)) {
-    throw new Error("request already saved");
-  }
-  FEEDBACK_REQUESTS.set(request.requestId, request);
 }
 
 export async function getFeedbackRequest(
   requestId: string,
 ): Promise<FeedbackRequest | undefined> {
-  return FEEDBACK_REQUESTS.get(requestId);
+  return persister.get(requestId);
 }
 
-export async function getFeedbackRequests(): Promise<Array<FeedbackRequest>> {
-  return FEEDBACK_REQUESTS.values().toArray();
+export async function getFeedbackRequests(): Promise<
+  Array<Versioned<FeedbackRequest>>
+> {
+  return persister.getAll();
 }
 
 export function parsePartialFeedback(
@@ -133,10 +179,6 @@ export function parseCompleteFeedback(
   return Schema.decodeUnknownSync(completeFeedbackSchema)(feedback);
 }
 
-export async function saveFeedback(request: FeedbackRequest): Promise<void> {
-  request.updatedAt = new Date().toISOString();
-  FEEDBACK_REQUESTS.set(
-    request.requestId,
-    Schema.decodeUnknownSync(feedbackRequestSchema)(request),
-  );
+export async function saveFeedback(request: FeedbackRequest): Promise<Versioned<FeedbackRequest>> {
+  return persister.save(request)
 }
