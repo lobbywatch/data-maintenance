@@ -143,17 +143,23 @@ export async function getInterests(
   );
 
   return {
-    memberships: interests.filter(
-      (interest) => interest.compensation.type === "payingMember",
-    ),
+    memberships: interests.filter(isSimpleMembership),
     mandates: interests
-      .filter((interest) => interest.compensation.type !== "payingMember")
+      .filter((interest) => !isSimpleMembership(interest))
       .sort(
         (a, b) =>
           INTEREST_TABLE_SORT_ORDER[a.compensation.type] -
           INTEREST_TABLE_SORT_ORDER[b.compensation.type],
       ),
   };
+}
+
+function isSimpleMembership(interest: Interest) {
+  return (
+    interest.kind === "mitglied" &&
+    interest.function === null &&
+    interest.compensation.type === "payingMember"
+  );
 }
 
 function getCompensationType(verguetung: Number): Compsensation["type"] {
