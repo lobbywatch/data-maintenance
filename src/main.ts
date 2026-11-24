@@ -5,7 +5,7 @@ import MF2 from "i18next-mf2";
 import * as i18nextmiddleware from "i18next-http-middleware";
 import { Liquid } from "liquidjs";
 import bodyParser from "body-parser";
-import { getPersons, getInterests, getPerson } from "./data.ts";
+import { getPersons, getPerson, getInterests } from "./lwdata/index.ts";
 import { auth } from "express-openid-connect";
 import { get } from "./config.ts";
 import { randomBytes } from "node:crypto";
@@ -17,9 +17,9 @@ import {
   getFeedbackRequests,
   getFeedbackRequestText,
   parseCompleteFeedback,
-  parsePartialFeedback,
   saveFeedback,
-} from "./feedback.ts";
+} from "./feedback/index.ts";
+import type { FeedbackRequest } from "./feedback/schema.ts";
 
 const app: Express = express();
 
@@ -179,12 +179,12 @@ app.get("/:lng/feedback/:requestId/form", async function (req, res) {
     return;
   }
 
-  if (feedbackRequest.state === "complete") {
+  if (feedbackRequest.data.state === "complete") {
     res.render("feedback-already-complete");
     return;
   }
 
-  const interests = await getInterests(feedbackRequest.personId);
+  const interests = await getInterests(feedbackRequest.data.personId);
 
   res.render("feedback-form", {
     request: feedbackRequest,
@@ -202,10 +202,10 @@ app.get("/:lng/feedback/:requestId/view", async function (req, res) {
     return;
   }
   const person = await getPerson(
-    feedbackRequest.personId,
-    feedbackRequest.personType,
+    feedbackRequest.data.personId,
+    feedbackRequest.data.personType,
   );
-  const interests = await getInterests(feedbackRequest.personId);
+  const interests = await getInterests(feedbackRequest.data.personId);
   res.render("feedback-view", {
     request: feedbackRequest,
     interests,
@@ -220,10 +220,15 @@ app.post("/:lng/feedback/:requestId/save", async function (req, res) {
       res.sendStatus(404);
       return;
     }
-    const feedback = parsePartialFeedback(req.body);
-    feedbackRequest.state = "partial";
-    feedbackRequest.feedback = feedback;
-    await saveFeedback(feedbackRequest);
+    console.log(req.body);
+    const feedback = parseCompleteFeedback(req.body);
+    const updatedRequest: FeedbackRequest = {
+      ...feedbackRequest.data,
+      state: "partial",
+      updatedAt: new Date().toISOString(),
+      feedback,
+    };
+    await saveFeedback(updatedRequest, feedbackRequest.version);
     res.redirect(`/${req.language}/feedback/${req.params.requestId}/form`);
   } catch (error) {
     console.error(error);
@@ -239,9 +244,13 @@ app.post("/:lng/feedback/:requestId/complete", async function (req, res) {
       return;
     }
     const feedback = parseCompleteFeedback(req.body);
-    feedbackRequest.state = "complete";
-    feedbackRequest.feedback = feedback;
-    await saveFeedback(feedbackRequest);
+    const updatedRequest: FeedbackRequest = {
+      ...feedbackRequest.data,
+      state: "complete",
+      updatedAt: new Date().toISOString(),
+      feedback,
+    };
+    await saveFeedback(updatedRequest, feedbackRequest.version);
     res.render("feedback-completed");
   } catch (error) {
     console.error(error);
@@ -254,11 +263,9 @@ app.get("/:lng/feedback", async function (req, res) {
 
   res.render("feedback-requests", {
     createRequestLink: `/${req.language}/feedback/request`,
-    feedbackRequests: feedbackRequests.map((request) => {
+    feedbackRequests: feedbackRequests.map(({ data: request }) => {
       const person = getPerson(request.personId, request.personType);
-      request.person = person;
-      request.viewLink = createViewLink(request);
-      return request;
+      return { ...request, viewLink: createViewLink(request), person };
     }),
   });
 });

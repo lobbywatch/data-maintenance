@@ -7,7 +7,8 @@
   "type": "module",
   "main": "main.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:unit": "node --experimental-test-module-mocks --test './src/**/*.test.ts'",
+    "test:unit:watch": "node --experimental-test-module-mocks --watch --test './src/**/*.test.ts'",
     "fmt": "prettier -w .",
     "dev": "node --env-file .env --watch-path src src/main.ts",
     "check": "tsc",
@@ -15,7 +16,6 @@
   },
   "dependencies": {
     "body-parser": "2.4.0",
-    "effect": "4.0.4",
     "express": "5.2.1",
     "express-openid-connect": "3.4.0",
     "helmet": "8.3.0",
@@ -24,7 +24,8 @@
     "i18next-mf2": "2.1.1",
     "liquidjs": "10.30.0",
     "mariadb": "3.5.4",
-    "winston": "3.19.0"
+    "winston": "3.19.0",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@shopify/prettier-plugin-liquid": "1.11.2",

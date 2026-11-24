@@ -1,13 +1,12 @@
-import mariadb from "mariadb";
-import * as config from "./config.ts";
-import { Schema } from "effect";
-
-const CompensationSchema = Schema.Struct({
-  type: Schema.Literals(["paid", "paidUnknown", "volunteer", "payingMember"]),
-  amount: Schema.Finite,
-  description: Schema.NullOr(Schema.String),
-});
-type Compsensation = Schema.Schema.Type<typeof CompensationSchema>;
+import mariadb, { type Pool } from "mariadb";
+import * as config from "../config.ts";
+import {
+  interestSchema,
+  personSchema,
+  type Compsensation,
+  type Interest,
+  type Person,
+} from "./schema.ts";
 
 // payingMember is shown in separate table
 const INTEREST_TABLE_SORT_ORDER: Record<
@@ -19,51 +18,30 @@ const INTEREST_TABLE_SORT_ORDER: Record<
   volunteer: 1,
 };
 
-const InterestSchema = Schema.Struct({
-  id: Schema.Number,
-  kind: Schema.Literals([
-    "mitglied",
-    "vorstand",
-    "beirat",
-    "geschaeftsfuehrend",
-    "taetig",
-    "gesellschafter",
-    "finanziell",
-  ]),
-  function: Schema.NullOr(
-    Schema.Literals(["praesident", "vizepraesident", "mitglied"]),
-  ),
-  organisationName: Schema.String,
-  organisationLegalForm: Schema.String,
-  compensation: CompensationSchema,
-});
-type Interest = Schema.Schema.Type<typeof InterestSchema>;
+let pool: Pool;
 
-export const PersonSchema = Schema.Struct({
-  type: Schema.Literals(["lobbyist", "mp"]),
-  id: Schema.Number,
-  firstName: Schema.String,
-  lastName: Schema.String,
-});
-export type Person = Schema.Schema.Type<typeof PersonSchema>;
-
-const pool = mariadb.createPool({
-  host: config.get("db_host"),
-  user: config.get("db_user"),
-  password: config.get("db_password"),
-  database: "lobbywat_lobbywatch",
-  connectionLimit: 5,
-});
-
+function getPool(): Pool {
+  if (!pool) {
+    pool = mariadb.createPool({
+      host: config.get("db_host"),
+      user: config.get("db_user"),
+      password: config.get("db_password"),
+      database: "lobbywat_lobbywatch",
+      connectionLimit: 5,
+    });
+  }
+  return pool;
+}
 export async function getPersons(): Promise<Array<Person>> {
-  const connection = await pool.getConnection();
+  const connection = await getPool().getConnection();
   const rows = await connection.query<
     { id: number; vorname: string; nachname: string }[]
   >(
     "select 'mp' as type, id, nachname, vorname from parlamentarier where im_rat_bis is null LIMIT 100", // TODO
   );
   connection.end();
-  return Schema.decodeUnknownSync(Schema.Array(PersonSchema))(
+
+  return personSchema.array().parse(
     rows.map((row) => ({
       type: "mp",
       id: row.id,
@@ -77,7 +55,7 @@ export async function getPerson(
   id: Person["id"],
   type: Person["type"],
 ): Promise<Person> {
-  const connection = await pool.getConnection();
+  const connection = await getPool().getConnection();
   const rows = await connection.query<
     { id: number; vorname: string; nachname: string }[]
   >(
@@ -85,7 +63,7 @@ export async function getPerson(
     [id],
   );
   connection.end();
-  const persons = Schema.decodeUnknownSync(Schema.Array(PersonSchema))(
+  const persons = personSchema.array().parse(
     rows.map((row) => ({
       type: "mp",
       id: row.id,
@@ -103,8 +81,8 @@ export async function getPerson(
 export async function getInterests(
   personId: number,
 ): Promise<{ memberships: Interest[]; mandates: Interest[] }> {
-  const connection = await pool.getConnection();
-  const year = new Date().getFullYear() - 1; // assuming feedbacks are requested in late winter/early spring
+  const connection = await getPool().getConnection();
+  const year = new Date().getFullYear() - 1; // TODO assuming feedbacks are requested in late winter/early spring
   const rows = await connection.query<
     {
       id: number;
@@ -126,7 +104,7 @@ export async function getInterests(
   );
   connection.end();
 
-  const interests = Schema.decodeUnknownSync(Schema.Array(InterestSchema))(
+  const interests = interestSchema.array().parse(
     rows.map((row) => ({
       id: row.id,
       kind: row.art,
@@ -139,7 +117,6 @@ export async function getInterests(
         amount: row.verguetung,
       },
     })),
-    { errors: "all", reportInput: true },
   );
 
   return {

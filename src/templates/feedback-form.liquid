@@ -99,7 +99,7 @@
                     type="radio"
                     value="ok"
                     name="{{ rid }}"
-                    {{ request.feedback[interest.id].response == 'ok' | if_true: 'checked' }}
+                    {{ request.data.feedback[interest.id].response == 'ok' | if_true: 'checked' }}
                     id="response_ok_{{ interest.id }}"
                   >
                   <label for="response_ok_{{ interest.id }}">{{ 'feedbackForm_responseLabel_ok' | t }}</label>
@@ -110,7 +110,7 @@
                     type="radio"
                     value="wrong"
                     name="{{ rid }}"
-                    {{ request.feedback[interest.id].response == 'wrong' | if_true: 'checked' }}
+                    {{ request.data.feedback[interest.id].response == 'wrong' | if_true: 'checked' }}
                     id="response_wrong_{{ interest.id }}"
                   >
                   <label for="response_wrong_{{ interest.id }}">{{ 'feedbackForm_responseLabel_wrong' | t }}</label>
@@ -123,7 +123,7 @@
                     rows="3"
                     name="{{ cid }}"
                     id="{{ cid }}"
-                  >{{ request.feedback[interest.id].comment}}</textarea>
+                  >{{ request.data.feedback[interest.id].comment}}</textarea>
                 </div>
               </fieldset>
             </td>
