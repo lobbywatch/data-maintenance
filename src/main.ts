@@ -15,11 +15,11 @@ import {
   createViewLink,
   getFeedbackRequest,
   getFeedbackRequests,
-  getFeedbackRequestText,
   parseCompleteFeedback,
   saveFeedback,
 } from "./feedback/index.ts";
 import type { FeedbackRequest } from "./feedback/schema.ts";
+import { sendFeedbackRequest } from "./feedback/mail.ts";
 
 const app: Express = express();
 
@@ -163,8 +163,18 @@ app.post("/:lng/feedback/createRequest", async function (req, res) {
   try {
     const feedbackRequest = await createFeedbackRequest(req.body);
     const secretLink = createSecretLink(feedbackRequest);
-    const text = await getFeedbackRequestText(secretLink);
-    res.render("feedback-request-created", { text, secretLink });
+    const person = await getPerson(feedbackRequest.personId, "mp");
+    const recipient = req.oidc.user.email;
+    await sendFeedbackRequest(recipient, person.contactLanguage, secretLink);
+    const ts = new Date().toISOString();
+    const updatedFeedbackRequest: FeedbackRequest = {
+      ...feedbackRequest,
+      state: "sent",
+      sentAt: ts,
+      updatedAt: ts,
+    };
+    await saveFeedback(updatedFeedbackRequest, "*");
+    res.redirect(`/${req.language}/feedback`);
   } catch (error) {
     console.error(error);
     res.sendStatus(500);

@@ -50,12 +50,22 @@ export const feedbackRequestSchema = z.discriminatedUnion("state", [
     createdAt: z.iso.datetime(),
   }),
   z.strictObject({
+    state: z.literal("sent"),
+    personId: z.number(),
+    personType: personSchema.shape.type,
+    requestId: z.string(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    sentAt: z.iso.datetime(),
+  }),
+  z.strictObject({
     state: z.literal("partial"),
     personId: z.number(),
     personType: personSchema.shape.type,
     requestId: z.string(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
+    sentAt: z.iso.datetime(),
     feedback: completeFeedbackSchema,
   }),
   z.strictObject({
@@ -65,6 +75,7 @@ export const feedbackRequestSchema = z.discriminatedUnion("state", [
     requestId: z.string(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
+    sentAt: z.iso.datetime(),
     feedback: completeFeedbackSchema,
   }),
 ]);

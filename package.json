@@ -24,6 +24,7 @@
     "i18next-mf2": "2.1.1",
     "liquidjs": "10.30.0",
     "mariadb": "3.5.4",
+    "nodemailer": "10.6.1",
     "winston": "3.19.0",
     "zod": "4.6.7"
   },

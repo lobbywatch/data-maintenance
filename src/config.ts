@@ -5,7 +5,9 @@ export function get(
     | "db_host"
     | "oidc_server"
     | "oidc_client_id"
-    | "base_url",
+    | "base_url"
+    | "smtp_user"
+    | "smtp_pass",
 ): string {
   const fullKey = `LW_${key.toUpperCase()}`;
   if (process.env[fullKey]) {

@@ -30,5 +30,6 @@ export const personSchema = z.strictObject({
   id: z.number(),
   firstName: z.string(),
   lastName: z.string(),
+  contactLanguage: z.enum(["de", "fr"]),
 });
 export type Person = z.infer<typeof personSchema>;

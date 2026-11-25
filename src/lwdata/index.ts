@@ -35,9 +35,14 @@ function getPool(): Pool {
 export async function getPersons(): Promise<Array<Person>> {
   const connection = await getPool().getConnection();
   const rows = await connection.query<
-    { id: number; vorname: string; nachname: string }[]
+    {
+      id: number;
+      vorname: string;
+      nachname: string;
+      arbeitssprache: "de" | "fr";
+    }[]
   >(
-    "select 'mp' as type, id, nachname, vorname from parlamentarier where im_rat_bis is null LIMIT 100", // TODO
+    "select 'mp' as type, id, nachname, vorname, arbeitssprache from parlamentarier where im_rat_bis is null LIMIT 100", // TODO
   );
   connection.end();
 
@@ -47,6 +52,7 @@ export async function getPersons(): Promise<Array<Person>> {
       id: row.id,
       firstName: row.vorname,
       lastName: row.nachname,
+      contactLanguage: row.arbeitssprache,
     })),
   );
 }
@@ -57,9 +63,14 @@ export async function getPerson(
 ): Promise<Person> {
   const connection = await getPool().getConnection();
   const rows = await connection.query<
-    { id: number; vorname: string; nachname: string }[]
+    {
+      id: number;
+      vorname: string;
+      nachname: string;
+      arbeitssprache: "de" | "fr";
+    }[]
   >(
-    "SELECT 'mp' AS type, id, nachname, vorname FROM parlamentarier WHERE id = ?",
+    "SELECT 'mp' AS type, id, nachname, vorname, arbeitssprache FROM parlamentarier WHERE id = ?",
     [id],
   );
   connection.end();
@@ -69,6 +80,7 @@ export async function getPerson(
       id: row.id,
       firstName: row.vorname,
       lastName: row.nachname,
+      contactLanguage: row.arbeitssprache,
     })),
   );
 
