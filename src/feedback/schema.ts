@@ -2,7 +2,7 @@ import * as z from "zod";
 import { personSchema } from "../lwdata/schema.ts";
 
 export type Versioned<T> = {
-  version: string;
+  version: null | string;
   data: T;
 };
 
@@ -37,9 +37,34 @@ const stringToNumber = z.codec(z.string().regex(z.regexes.number), z.number(), {
   encode: (num) => num.toString(),
 });
 
-export const createFeedbackRequestSchema = z.strictObject({
-  personId: stringToNumber,
-});
+export const createFeedbackRequestSchema = z.preprocess(
+  (value) => {
+    if (!(value && typeof value === "object" && "personIds" in value)) {
+      return null;
+    }
+
+    if (Array.isArray(value["personIds"])) {
+      const persons = value.personIds.map((id) => ({
+        id,
+        type: value[`type_${id}`],
+      }));
+
+      return { persons };
+    } else if (typeof value.personIds === "string") {
+      return {
+        persons: [
+          { id: value.personIds, type: value[`type_${value.personIds}`] },
+        ],
+      };
+    }
+    return null;
+  },
+  z.strictObject({
+    persons: z
+      .strictObject({ id: stringToNumber, type: personSchema.shape.type })
+      .array(),
+  }),
+);
 
 export const feedbackRequestSchema = z.discriminatedUnion("state", [
   z.strictObject({
@@ -57,6 +82,16 @@ export const feedbackRequestSchema = z.discriminatedUnion("state", [
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
     sentAt: z.iso.datetime(),
+  }),
+  z.strictObject({
+    state: z.literal("failed"),
+    personId: z.number(),
+    personType: personSchema.shape.type,
+    requestId: z.string(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    failedAt: z.iso.datetime(),
+    message: z.string(),
   }),
   z.strictObject({
     state: z.literal("partial"),

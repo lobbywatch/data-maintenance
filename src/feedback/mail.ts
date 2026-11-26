@@ -1,50 +1,119 @@
-import { createTransport } from "nodemailer";
+import {
+  createTransport,
+  type Mail,
+  type SMTPSentMessageInfo,
+  type SMTPTransportOptions,
+} from "nodemailer";
 
 import { get } from "../config.ts";
-import type { Person } from "../lwdata/schema.ts";
 import { createLogger } from "../log.ts";
 
-const log = createLogger("mail");
-const TEMPLATES: Record<
-  Person["contactLanguage"],
-  { subject: string; body: string }
-> = {
-  de: {
-    subject: "Bitte ausfüllen",
-    body: "Guten Tag,\n\nWir möchten Sie bitten, zu folgenden Interessenbindungen Stellung zu nehmen: #LINK#.\n\nFreundliche Grüsse",
-  },
-  fr: { subject: "Bonjour", body: "Bonjour\n\n#LINK#" },
-};
+const log = createLogger("mailer");
 
-export async function sendFeedbackRequest(
-  recipient: string,
-  templateLanguage: Person["contactLanguage"],
-  secretLink: URL,
-): Promise<void> {
-  const transporter = createTransport({
-    service: "infomaniak",
-    maxConnections: 3,
-    auth: { user: get("smtp_user"), pass: get("smtp_pass") },
-  });
-  const template = TEMPLATES[templateLanguage];
-  const text = template.body.replace("#LINK#", secretLink.href);
-  const response = await transporter.sendMail({
-    replyTo: "autorisierung@lobbywatch.ch",
-    subject: template.subject,
-    text,
-    to: recipient,
-    from: "no-reply@lobbywatch.ch",
-  });
-  transporter.close();
+interface Mailer {
+  open(): void;
+  close(): void;
+  send(mail: {
+    to: string;
+    from: string;
+    subject: string;
+    text: string;
+    replyTo?: string | undefined;
+  }): Promise<
+    { ok: true; messageId: string } | { ok: false; response: string }
+  >;
+}
 
-  if (response.rejected.includes(recipient)) {
-    log.error("mail rejected", { response: response.response });
-  } else if (response.accepted.includes(recipient)) {
-    log.info("mail accepted", {
-      response: response.response,
-      messageId: response.messageId,
-    });
-  } else {
-    log.warn("mail delivery unknown", { response });
+class ConsoleMailer implements Mailer {
+  #log;
+
+  constructor() {
+    this.#log = createLogger(ConsoleMailer.name);
   }
+
+  open(): void {
+    // NOP
+  }
+  close(): void {
+    // NOP
+  }
+  async send(mail: {
+    to: string;
+    from: string;
+    subject: string;
+    text: string;
+    replyTo?: string;
+  }): Promise<
+    { ok: true; messageId: string } | { ok: false; response: string }
+  > {
+    this.#log.info("sent mail", { mail });
+    return { ok: true, messageId: "" };
+  }
+}
+
+class SMTPMailer implements Mailer {
+  #mailer: Mail<SMTPSentMessageInfo, SMTPTransportOptions> | undefined;
+  #log;
+
+  constructor() {
+    this.#log = createLogger(SMTPMailer.name);
+  }
+
+  open(): void {
+    this.#mailer = createTransport({
+      service: "infomaniak",
+      auth: { user: get("smtp_user"), pass: get("smtp_pass") },
+    });
+    this.#log.debug("transport created");
+  }
+
+  close() {
+    this.#mailer?.close();
+    this.#mailer = undefined;
+    this.#log.debug("transport closed");
+  }
+
+  async send(mail: {
+    to: string;
+    from: string;
+    subject: string;
+    text: string;
+    replyTo?: string;
+  }): Promise<
+    { ok: true; messageId: string } | { ok: false; response: string }
+  > {
+    if (!this.#mailer) {
+      throw new Error("mailer not ready");
+    }
+
+    const response = await this.#mailer.sendMail({
+      subject: mail.subject,
+      text: mail.text,
+      to: mail.to,
+      from: mail.from,
+      replyTo: mail.replyTo,
+    });
+    this.#log.debug("mail transport response", { response });
+
+    if (response.accepted.includes(mail.to)) {
+      return { ok: true, messageId: response.messageId };
+    }
+    return { ok: false, response: response.response };
+  }
+}
+
+export async function withMailer(
+  fn: (sendMail: Mailer["send"]) => Promise<void>,
+): Promise<void> {
+  const mailer = getMailer();
+  mailer.open();
+  log.debug("transport created");
+  await fn(mailer.send.bind(mailer));
+  mailer.close();
+  log.debug("transport closed");
+}
+
+function getMailer(): Mailer {
+  // TODO
+  return new ConsoleMailer();
 }

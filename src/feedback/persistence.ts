@@ -1,15 +1,18 @@
-import {
-  feedbackRequestSchema,
-  type FeedbackRequest,
-  type Versioned,
-} from "./schema.ts";
+import { feedbackRequestSchema, type FeedbackRequest } from "./schema.ts";
+
+export type Version = null | string;
+
+export type Versioned<T> = {
+  version: Version;
+  data: T;
+};
 
 export interface FeedbackPersister {
   get(id: string): Promise<Versioned<FeedbackRequest> | undefined>;
   getAll(): Promise<Array<Versioned<FeedbackRequest>>>;
   save(
     request: FeedbackRequest,
-    version: string,
+    version: Version,
   ): Promise<Versioned<FeedbackRequest>>;
 }
 

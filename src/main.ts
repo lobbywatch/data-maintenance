@@ -10,17 +10,14 @@ import { auth } from "express-openid-connect";
 import { get } from "./config.ts";
 import { randomBytes } from "node:crypto";
 import {
-  createFeedbackRequest,
-  createSecretLink,
+  createFeedbackRequests,
   createViewLink,
   getFeedbackRequest,
   getFeedbackRequests,
   saveCompleteFeedback,
-  saveFeedback,
   savePartialFeedback,
+  sendFeedbackRequests,
 } from "./feedback/index.ts";
-import { sendFeedbackRequest } from "./feedback/mail.ts";
-import type { FeedbackRequest } from "./feedback/schema.ts";
 
 const app: Express = express();
 
@@ -156,25 +153,21 @@ app.get("/:lng/feedback/request", async function (req, res) {
   res.render("feedback", {
     mps,
     lang: req.language,
-    action: `/${req.language}/feedback/createRequest`,
+    action: `/${req.language}/feedback/createRequests`,
   });
 });
 
-app.post("/:lng/feedback/createRequest", async function (req, res) {
+app.post("/:lng/feedback/createRequests", async function (req, res) {
   try {
-    const feedbackRequest = await createFeedbackRequest(req.body);
-    const secretLink = createSecretLink(feedbackRequest);
-    const person = await getPerson(feedbackRequest.personId, "mp");
-    const recipient = req.oidc.user.email;
-    await sendFeedbackRequest(recipient, person.contactLanguage, secretLink);
-    const ts = new Date().toISOString();
-    const updatedFeedbackRequest: FeedbackRequest = {
-      ...feedbackRequest,
-      state: "sent",
-      sentAt: ts,
-      updatedAt: ts,
-    };
-    await saveFeedback(updatedFeedbackRequest, "*");
+    const feedbackRequests = await createFeedbackRequests(req.body);
+    await sendFeedbackRequests(
+      {
+        recipient: req.oidc.user.email,
+        sender: get("smtp_user"),
+        replyTo: "autorisierung@lobbywatch.ch",
+      },
+      feedbackRequests,
+    );
     res.redirect(`/${req.language}/feedback`);
   } catch (error) {
     console.error(error);

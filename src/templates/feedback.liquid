@@ -1,26 +1,37 @@
 {% layout 'logged-in-layout.liquid' %}
+{% block head %}
+  <style>
+    .scroll-follower {
+      position: fixed;
+      bottom: 10px;
+      right: 33%;
+    }
+  </style>
+{% endblock %}
 {% block view %}
-  <table>
-    <thead>
-      <tr>
-        <th>{{ 'tableHeader_firstName' | t }}</th>
-        <th>{{ 'tableHeader_lastName' | t }}</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for mp in mps %}
+  <form action="{{ action }}" method="post">
+    <table>
+      <thead>
         <tr>
-          <td>{{ mp.firstName }}</td>
-          <td>{{ mp.lastName }}</td>
-          <td>
-            <form action="{{ action }}" method="post">
-              <input type="hidden" name="personId" value="{{ mp.id }}"
-              /><button>{{ 'table_newFeedbackButton' | t }}</button>
-            </form>
-          </td>
+          <th>{{ 'tableHeader_firstName' | t }}</th>
+          <th>{{ 'tableHeader_lastName' | t }}</th>
+          <th></th>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% for mp in mps %}
+          <tr>
+            <td>{{ mp.firstName }}</td>
+            <td>{{ mp.lastName }}</td>
+            <td>
+              {% capture name %}type_{{ mp.id }}{% endcapture %}
+              <input type="hidden" name="{{ name }}" value="{{ mp.type}}" />
+              <input type="checkbox" name="personIds" value="{{ mp.id }}" />
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button class="scroll-follower">{{ 'table_newFeedbackButton' | t }}</button>
+  </form>
 {% endblock %}

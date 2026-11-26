@@ -7,16 +7,30 @@ import {
   feedbackFormPayloadSchema,
   type CompleteFeedback,
   type FeedbackRequest,
-  type Versioned,
 } from "./schema.ts";
-import { InMemoryPersister, type FeedbackPersister } from "./persistence.ts";
+import {
+  InMemoryPersister,
+  type FeedbackPersister,
+  type Version,
+  type Versioned,
+} from "./persistence.ts";
+import { Readable } from "node:stream";
+import { getPerson } from "../lwdata/index.ts";
+import { withMailer } from "./mail.ts";
+import type { Person } from "../lwdata/schema.ts";
 
 const persister: FeedbackPersister = new InMemoryPersister();
 
-export async function getFeedbackRequestText(secretLink: URL): Promise<string> {
-  // TODO
-  return `Guten Tag,\n\nWir möchten Sie bitten, zu folgenden Interessenbindungen Stellung zu nehmen: ${secretLink}.\n\nFreundliche Grüsse`;
-}
+const TEMPLATES: Record<
+  Person["contactLanguage"],
+  { subject: string; body: string }
+> = {
+  de: {
+    subject: "Bitte ausfüllen",
+    body: "Guten Tag,\n\nWir möchten Sie bitten, zu folgenden Interessenbindungen Stellung zu nehmen:\n\n#LINK#\n\nFreundliche Grüsse",
+  },
+  fr: { subject: "Bonjour", body: "Bonjour\n\n#LINK#" },
+};
 
 export function createSecretLink(request: FeedbackRequest): URL {
   return new URL(`/de/feedback/${request.requestId}/form`, get("base_url"));
@@ -26,26 +40,81 @@ export function createViewLink(request: FeedbackRequest): URL {
   return new URL(`/de/feedback/${request.requestId}/view`, get("base_url"));
 }
 
-export async function createFeedbackRequest(
+export async function createFeedbackRequests(
   body: unknown,
-): Promise<FeedbackRequest> {
-  const req = createFeedbackRequestSchema.parse(body);
-  const randomString = randomBytes(32).toString("hex");
-  const feedbackRequest: FeedbackRequest = {
-    state: "new",
-    requestId: randomString,
-    personId: req.personId,
-    personType: "mp", // TODO
-    createdAt: new Date().toISOString(),
-  };
-  await persister.save(feedbackRequest, "TODO");
-  return feedbackRequest;
+): Promise<Array<Versioned<FeedbackRequest>>> {
+  const parsedFormBody = createFeedbackRequestSchema.parse(body);
+  const requests = parsedFormBody.persons.map((person) => {
+    const feedbackRequest: FeedbackRequest = {
+      state: "new",
+      requestId: randomBytes(32).toString("hex"),
+      personId: person.id,
+      personType: person.type,
+      createdAt: new Date().toISOString(),
+    };
+    return { data: feedbackRequest, version: null };
+  });
+  // TODO yes no maybe??
+  Readable.from(requests)
+    .map((feedbackRequest) => persister.save(feedbackRequest, "TODO"), {
+      concurrency: 1,
+    })
+    .toArray();
+  return requests;
+}
+
+export async function sendFeedbackRequests(
+  mail: { recipient: string; sender: string; replyTo?: string },
+  feedbackRequests: Array<Versioned<FeedbackRequest>>,
+): Promise<void> {
+  await withMailer(async (sendMail) => {
+    for (const feedbackRequest of feedbackRequests) {
+      const secretLink = createSecretLink(feedbackRequest.data);
+      const person = await getPerson(feedbackRequest.data.personId, "mp");
+      const template = TEMPLATES[person.contactLanguage];
+      const text = template.body.replace("#LINK#", secretLink.href);
+      const result = await sendMail({
+        to: mail.recipient,
+        from: mail.sender,
+        subject: template.subject,
+        text,
+        replyTo: mail.replyTo,
+      });
+
+      if (result.ok) {
+        const ts = new Date().toISOString();
+        const updatedFeedbackRequest: FeedbackRequest = {
+          ...feedbackRequest.data,
+          state: "sent",
+          sentAt: ts,
+          updatedAt: ts,
+        };
+        await persister.save(updatedFeedbackRequest, feedbackRequest.version);
+      } else {
+        const ts = new Date().toISOString();
+        const updatedFeedbackRequest: FeedbackRequest = {
+          ...feedbackRequest.data,
+          state: "failed",
+          updatedAt: ts,
+          failedAt: ts,
+          message: result.response,
+        };
+        await persister.save(updatedFeedbackRequest, feedbackRequest.version);
+      }
+    }
+  });
 }
 
 export async function savePartialFeedback(
   feedbackRequest: Versioned<FeedbackRequest>,
   body: unknown,
 ): Promise<void> {
+  if (
+    feedbackRequest.data.state === "new" ||
+    feedbackRequest.data.state === "failed"
+  ) {
+    throw new Error("request cannot be new or failed");
+  }
   const feedback = parseFeedback(body);
   const updatedRequest: FeedbackRequest = {
     ...feedbackRequest.data,
@@ -60,6 +129,12 @@ export async function saveCompleteFeedback(
   feedbackRequest: Versioned<FeedbackRequest>,
   body: unknown,
 ): Promise<void> {
+  if (
+    feedbackRequest.data.state === "new" ||
+    feedbackRequest.data.state === "failed"
+  ) {
+    throw new Error("request cannot be new or failed");
+  }
   const feedback = parseFeedback(body);
   const updatedRequest: FeedbackRequest = {
     ...feedbackRequest.data,
@@ -114,7 +189,7 @@ export function parseFeedback(body: unknown): CompleteFeedback {
 
 export async function saveFeedback(
   request: FeedbackRequest,
-  version: string,
+  version: Version,
 ): Promise<Versioned<FeedbackRequest>> {
   return persister.save(request, version);
 }

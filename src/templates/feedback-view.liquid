@@ -42,11 +42,11 @@
               <i>{{ interest.compensation.description }}</i>
             {% endif %}
           </td>
-          <td class="{{ request.feedback[interest.id].response }}">
-            {{ request.feedback[interest.id].response }}
+          <td class="{{ request.data.feedback[interest.id].response }}">
+            {{ request.data.feedback[interest.id].response }}
           </td>
           <td>
-            {{ request.feedback[interest.id].comment }}
+            {{ request.data.feedback[interest.id].comment }}
           </td>
         </tr>
       {% endfor %}
@@ -80,11 +80,11 @@
               <i>{{ interest.compensation.description }}</i>
             {% endif %}
           </td>
-          <td class="{{ request.feedback[interest.id].response }}">
-            {{ request.feedback[interest.id].response }}
+          <td class="{{ request.data.feedback[interest.id].response }}">
+            {{ request.data.feedback[interest.id].response }}
           </td>
           <td>
-            {{ request.feedback[interest.id].comment }}
+            {{ request.data.feedback[interest.id].comment }}
           </td>
         </tr>
       {% endfor %}
