@@ -1,5 +1,5 @@
 import { it, describe } from "node:test";
-import { parsePartialFeedback } from "./index.ts";
+import { parseFeedback } from "./index.ts";
 import * as assert from "node:assert/strict";
 
 describe("parsePartialFeedback", () => {
@@ -11,10 +11,10 @@ describe("parsePartialFeedback", () => {
       comment_14155: "",
       response_15628: "wrong",
       comment_15628: "haha",
-      comment_7957: "", // textarea field always shows up
+      comment_7957: "", // textarea fields always show up, even if empty
     };
 
-    const parsed = parsePartialFeedback(payload);
+    const parsed = parseFeedback(payload);
 
     assert.deepStrictEqual(parsed, {
       14870: { response: "ok" },

@@ -42,6 +42,34 @@ export async function createFeedbackRequest(
   return feedbackRequest;
 }
 
+export async function savePartialFeedback(
+  feedbackRequest: Versioned<FeedbackRequest>,
+  body: unknown,
+): Promise<void> {
+  const feedback = parseFeedback(body);
+  const updatedRequest: FeedbackRequest = {
+    ...feedbackRequest.data,
+    state: "partial",
+    updatedAt: new Date().toISOString(),
+    feedback,
+  };
+  await saveFeedback(updatedRequest, feedbackRequest.version);
+}
+
+export async function saveCompleteFeedback(
+  feedbackRequest: Versioned<FeedbackRequest>,
+  body: unknown,
+): Promise<void> {
+  const feedback = parseFeedback(body);
+  const updatedRequest: FeedbackRequest = {
+    ...feedbackRequest.data,
+    state: "complete",
+    updatedAt: new Date().toISOString(),
+    feedback,
+  };
+  await saveFeedback(updatedRequest, feedbackRequest.version);
+}
+
 export async function getFeedbackRequest(
   requestId: string,
 ): Promise<Versioned<FeedbackRequest> | undefined> {
@@ -54,9 +82,7 @@ export async function getFeedbackRequests(): Promise<
   return persister.getAll();
 }
 
-export function parsePartialFeedback(
-  body: Record<string, string>,
-): CompleteFeedback {
+export function parseFeedback(body: unknown): CompleteFeedback {
   const parsedBody = feedbackFormPayloadSchema.parse(body);
   const responses = Object.keys(parsedBody)
     .filter((key) => key.startsWith("response_"))
@@ -84,13 +110,6 @@ export function parsePartialFeedback(
     });
 
   return completeFeedbackSchema.parse(Object.fromEntries(responses));
-}
-
-export function parseCompleteFeedback(
-  body: Record<string, string>,
-): CompleteFeedback {
-  const feedback = parsePartialFeedback(body);
-  return completeFeedbackSchema.parse(feedback);
 }
 
 export async function saveFeedback(

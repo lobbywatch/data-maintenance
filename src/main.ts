@@ -15,11 +15,12 @@ import {
   createViewLink,
   getFeedbackRequest,
   getFeedbackRequests,
-  parseCompleteFeedback,
+  saveCompleteFeedback,
   saveFeedback,
+  savePartialFeedback,
 } from "./feedback/index.ts";
-import type { FeedbackRequest } from "./feedback/schema.ts";
 import { sendFeedbackRequest } from "./feedback/mail.ts";
+import type { FeedbackRequest } from "./feedback/schema.ts";
 
 const app: Express = express();
 
@@ -230,15 +231,7 @@ app.post("/:lng/feedback/:requestId/save", async function (req, res) {
       res.sendStatus(404);
       return;
     }
-    console.log(req.body);
-    const feedback = parseCompleteFeedback(req.body);
-    const updatedRequest: FeedbackRequest = {
-      ...feedbackRequest.data,
-      state: "partial",
-      updatedAt: new Date().toISOString(),
-      feedback,
-    };
-    await saveFeedback(updatedRequest, feedbackRequest.version);
+    await savePartialFeedback(feedbackRequest, req.body);
     res.redirect(`/${req.language}/feedback/${req.params.requestId}/form`);
   } catch (error) {
     console.error(error);
@@ -253,14 +246,7 @@ app.post("/:lng/feedback/:requestId/complete", async function (req, res) {
       res.sendStatus(404);
       return;
     }
-    const feedback = parseCompleteFeedback(req.body);
-    const updatedRequest: FeedbackRequest = {
-      ...feedbackRequest.data,
-      state: "complete",
-      updatedAt: new Date().toISOString(),
-      feedback,
-    };
-    await saveFeedback(updatedRequest, feedbackRequest.version);
+    await saveCompleteFeedback(feedbackRequest, req.body);
     res.render("feedback-completed");
   } catch (error) {
     console.error(error);
